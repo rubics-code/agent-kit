@@ -1,6 +1,6 @@
 {
   "name": "@rubics-code/agent-kit",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Agent machinery: tool groups, an approval gate, secret delivery, Infisical Agent Vault keys, a terminal and web chat, and a container mode.",
   "license": "MIT",
   "author": "Rubics Code",
