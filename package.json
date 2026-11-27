@@ -3,33 +3,45 @@
   "version": "0.1.0",
   "description": "Agent machinery: tool groups, an approval gate, secret delivery, Infisical Agent Vault keys, a terminal and web chat, and a container mode.",
   "license": "MIT",
+  "author": "Rubics Code",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rubics-code/agent-kit.git"
+  },
+  "homepage": "https://github.com/rubics-code/agent-kit#readme",
+  "bugs": "https://github.com/rubics-code/agent-kit/issues",
+  "keywords": [
+    "agent",
+    "langchain",
+    "langgraph",
+    "infisical",
+    "agent-vault",
+    "tools",
+    "approval"
+  ],
   "type": "module",
   "engines": {
     "node": ">=24"
   },
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "default": "./src/index.ts"
-    }
-  },
-  "publishConfig": {
-    "access": "public",
-    "exports": {
-      ".": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      }
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     }
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "build": "node scripts/build.ts",
+    "prepack": "node scripts/build.ts",
     "pack-check": "node scripts/pack-check.ts"
   },
   "dependencies": {
