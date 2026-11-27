@@ -1,6 +1,6 @@
-// Proves that the published package works outside the workspace: build, pack
-// (pnpm applies publishConfig), install the tarball into an empty folder with
-// npm, and import it from plain Node.
+// Proves that the published package works on its own: pack (prepack builds
+// dist/), install the tarball into an empty folder with npm, run a consumer
+// from plain Node, and type-check a consumer file.
 import { execFileSync } from "node:child_process";
 import { existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -12,10 +12,9 @@ const work = mkdtempSync(join(tmpdir(), "agent-kit-pack-"));
 const run = (cmd: string, args: string[], cwd: string) => execFileSync(cmd, args, { cwd, stdio: "inherit" });
 
 try {
-  run("node", ["scripts/build.ts"], root);
-  run("pnpm", ["pack", "--pack-destination", work], root);
+  run("npm", ["pack", "--silent", "--pack-destination", work], root);
   const tarball = readdirSync(work).find((f) => f.endsWith(".tgz"));
-  if (!tarball) throw new Error("pnpm pack made no tarball");
+  if (!tarball) throw new Error("npm pack made no tarball");
 
   const app = join(work, "app");
   run("mkdir", ["-p", app], work);
