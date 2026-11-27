@@ -70,10 +70,11 @@ Set `INFISICAL_DOMAIN`, `INFISICAL_AGENT_VAULT_PROXY_ADDRESS`, `INFISICAL_AGENT_
 
 ## Release
 
-1. Change `version` in `package.json` in a PR, and merge it.
-2. Make a GitHub release with the tag `v<version>`, for example `v0.2.0`.
+Make a GitHub release with a tag `v<major>.<minor>.<patch>`, for example `v0.2.0`. The `release` workflow sets that version, runs the tests, and publishes to npm. `version` in `package.json` stays `0.0.0`: the tag is the version. A release that is marked as a prerelease goes to the npm tag `next`.
 
-The `release` workflow publishes to npm with trusted publishing (OIDC), so no npm token is stored. Until 1.0, a minor version can break the interface.
+The workflow uses trusted publishing (OIDC), so no npm token is stored, and npm adds provenance. The first release can use a short-lived `NPM_TOKEN` secret in the `npm` environment, because npm lets you add a trusted publisher only to a package that exists.
+
+Until 1.0, a minor version can break the interface.
 
 ## License
 
