@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{NAME}}</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --panel: #ffffff; --ink: #1c1b19; --muted: #6b6862; --line: #e3e0da;
+    --accent: #a3123a; --accent-soft: #f8e7ec; --ok: #1f7a4d; --warn-soft: #fff6e0; --warn-line: #e8c76a;
+    --me: #1c1b19; --me-ink: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141312; --panel: #1d1c1a; --ink: #ecebe8; --muted: #9a968f; --line: #2f2d2a;
+      --accent: #ff5c86; --accent-soft: #3a1520; --ok: #57c68f; --warn-soft: #2c2412; --warn-line: #7a6326;
+      --me: #ecebe8; --me-ink: #141312;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: flex; flex-direction: column;
+  }
+  header {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    border-bottom: 1px solid var(--line); background: var(--panel);
+  }
+  .mark { width: 28px; height: 28px; border-radius: 8px; background: var(--accent); flex: none; }
+  header h1 { font-size: 17px; margin: 0; }
+  #meta { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  button { font: inherit; cursor: pointer; }
+  .ghost {
+    background: none; border: 1px solid var(--line); color: var(--ink);
+    padding: 6px 10px; border-radius: 8px; font-size: 14px;
+  }
+  .ghost:hover { border-color: var(--muted); }
+  .wrap { flex: 1; display: flex; min-height: 0; }
+  .chat { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  main { flex: 1; overflow-y: auto; }
+  aside {
+    width: 320px; flex: none; overflow-y: auto; border-left: 1px solid var(--line);
+    background: var(--panel); padding: 16px;
+  }
+  aside h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 12px; }
+  .group { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+  .group-head { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
+  .group.off .dot { background: var(--muted); }
+  .group.off .group-head { color: var(--muted); }
+  .state { margin-left: auto; font-size: 12px; font-weight: 500; color: var(--muted); }
+  .group ul { list-style: none; margin: 8px 0 0; padding: 0; }
+  .group li { display: flex; flex-wrap: wrap; gap: 0 6px; align-items: baseline; font: 12.5px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; word-break: break-word; }
+  .group.off li { color: var(--muted); }
+  .tag { font: 11px ui-sans-serif, system-ui, sans-serif; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; padding: 0 4px; flex: none; }
+  .missing { margin-top: 8px; font-size: 13px; background: var(--warn-soft); border: 1px solid var(--warn-line); border-radius: 8px; padding: 6px 8px; }
+  .missing code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .keys { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  #toggle { display: none; }
+  @media (max-width: 999px) {
+    #toggle { display: inline-block; }
+    aside { display: none; position: fixed; top: 53px; right: 0; bottom: 0; width: min(340px, 100%); z-index: 10; box-shadow: -8px 0 24px rgb(0 0 0 / .25); }
+    body.tools-open aside { display: block; }
+  }
+  #log { max-width: 760px; margin: 0 auto; padding: 20px 16px 8px; display: flex; flex-direction: column; gap: 12px; }
+  .msg { max-width: 85%; padding: 10px 14px; border-radius: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .me { align-self: flex-end; background: var(--me); color: var(--me-ink); border-bottom-right-radius: 4px; }
+  .agent { align-self: flex-start; background: var(--panel); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+  .md { white-space: normal; }
+  .md p { margin: 0 0 8px; } .md p:last-child { margin-bottom: 0; }
+  .md ul, .md ol { margin: 0 0 8px; padding-left: 22px; }
+  .md code { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--bg); padding: 1px 5px; border-radius: 5px; }
+  .md pre { background: var(--bg); padding: 10px; border-radius: 8px; overflow-x: auto; margin: 0 0 8px; }
+  .md pre code { padding: 0; background: none; }
+  .md .table { overflow-x: auto; margin: 0 0 8px; }
+  .md table { border-collapse: collapse; font-size: 14px; }
+  .md th, .md td { border-bottom: 1px solid var(--line); padding: 5px 10px; text-align: left; white-space: nowrap; }
+  .md th { color: var(--muted); font-weight: 600; }
+  .err { align-self: center; color: var(--accent); font-size: 14px; }
+  .hint { color: var(--muted); text-align: center; font-size: 14px; padding: 24px 0; }
+  .card {
+    align-self: stretch; background: var(--warn-soft); border: 1px solid var(--warn-line);
+    border-radius: 12px; padding: 12px 14px;
+  }
+  .card .tool { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); }
+  .card .sum { margin: 4px 0 10px; overflow-wrap: anywhere; }
+  .card .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .approve { background: var(--ok); color: #fff; border: 0; padding: 7px 14px; border-radius: 8px; }
+  .reject { background: none; border: 1px solid var(--line); color: var(--ink); padding: 7px 14px; border-radius: 8px; }
+  .card .why {
+    flex: 1; min-width: 160px; font: inherit; font-size: 14px; padding: 6px 10px; color: var(--ink);
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  }
+  .card.done { opacity: .6; }
+  .card .verdict { font-size: 14px; font-weight: 600; }
+  .typing { align-self: flex-start; color: var(--muted); font-size: 14px; }
+  footer { border-top: 1px solid var(--line); background: var(--panel); }
+  form { max-width: 760px; margin: 0 auto; padding: 12px 16px; display: flex; gap: 8px; align-items: flex-end; }
+  textarea {
+    flex: 1; resize: none; min-height: 44px; max-height: 180px; padding: 10px 12px;
+    font: inherit; color: var(--ink); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 12px; outline: none;
+  }
+  textarea:focus { border-color: var(--muted); }
+  .round {
+    width: 44px; height: 44px; flex: none; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--bg); color: var(--ink); display: grid; place-items: center;
+  }
+  .round svg { width: 20px; height: 20px; }
+  #send { background: var(--accent); border-color: var(--accent); color: #fff; }
+  #mic.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 6px var(--accent-soft); } }
+  button:disabled { opacity: .45; cursor: default; }
+  .opts { max-width: 760px; margin: 0 auto; padding: 0 16px 10px; color: var(--muted); font-size: 13px; display: flex; gap: 16px; }
+  .opts label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+</style>
+</head>
+<body>
+<header>
+  <div class="mark" aria-hidden="true"></div>
+  <h1>{{NAME}}</h1>
+  <div id="meta"></div>
+  <button class="ghost" id="toggle" type="button" aria-controls="tools" aria-expanded="false">Tools</button>
+  <button class="ghost" id="new" type="button">New chat</button>
+</header>
+<div class="wrap">
+<div class="chat">
+<main id="scroll"><div id="log" aria-live="polite"></div></main>
+<footer>
+  <form id="form">
+    <button class="round" id="mic" type="button" title="Speak" aria-label="Speak">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+    </button>
+    <textarea id="text" rows="1" placeholder="Message {{NAME}}" aria-label="Message"></textarea>
+    <button class="round" id="send" type="submit" title="Send" aria-label="Send">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </button>
+  </form>
+  <div class="opts">
+    <label><input type="checkbox" id="speak"> Read replies aloud</label>
+    <label><input type="checkbox" id="autosend" checked> Send when I stop talking</label>
+  </div>
+</footer>
+</div>
+<aside id="tools" aria-label="Tools"><h2>Tools</h2><div id="groups"></div></aside>
+</div>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const log = $("log"), scroll = $("scroll"), text = $("text"), send = $("send"), mic = $("mic");
+
+  let thread = null, busy = false, waiting = false;
+
+  function add(cls, content) {
+    const el = document.createElement("div");
+    el.className = cls;
+    if (content !== undefined) el.textContent = content;
+    log.append(el);
+    scroll.scrollTop = scroll.scrollHeight;
+    return el;
+  }
+
+  async function call(path, payload) {
+    const res = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload || {}),
+    });
+    const data = await res.json().catch(() => ({ error: res.statusText }));
+    if (!res.ok) throw new Error(data.error || res.statusText);
+    return data;
+  }
+
+  function setBusy(b) {
+    busy = b;
+    send.disabled = b || waiting;
+    text.disabled = waiting;
+  }
+
+  function speak(s) {
+    if (!$("speak").checked || !("speechSynthesis" in window)) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(s);
+    u.lang = "en-AU";
+    speechSynthesis.speak(u);
+  }
+
+  // A small Markdown subset. Each value is escaped first, so a reply can never inject HTML.
+  const esc = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const inline = (s) => esc(s)
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  const cells = (row) => row.trim().replace(/^\||\|$/g, "").split("|").map((c) => c.trim());
+  function markdown(src) {
+    const out = [], lines = src.replace(/\r/g, "").split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i];
+      if (l.startsWith("```")) {
+        const code = [];
+        while (++i < lines.length && !lines[i].startsWith("```")) code.push(lines[i]);
+        out.push(`<pre><code>${esc(code.join("\n"))}</code></pre>`);
+      } else if (/^\s*\|.*\|\s*$/.test(l) && /^\s*\|?[\s:|-]+\|?\s*$/.test(lines[i + 1] || "")) {
+        const head = cells(l);
+        i++;
+        const body = [];
+        while (i + 1 < lines.length && /^\s*\|.*\|\s*$/.test(lines[i + 1])) body.push(cells(lines[++i]));
+        out.push(`<div class="table"><table><thead><tr>${head.map((h) => `<th>${inline(h)}</th>`).join("")}</tr></thead><tbody>${
+          body.map((r) => `<tr>${r.map((c) => `<td>${inline(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`);
+      } else if (/^\s*([-*]|\d+\.)\s+/.test(l)) {
+        const ordered = /^\s*\d+\./.test(l), items = [];
+        i--;
+        while (i + 1 < lines.length && /^\s*([-*]|\d+\.)\s+/.test(lines[i + 1])) items.push(lines[++i].replace(/^\s*([-*]|\d+\.)\s+/, ""));
+        const tag = ordered ? "ol" : "ul";
+        out.push(`<${tag}>${items.map((x) => `<li>${inline(x)}</li>`).join("")}</${tag}>`);
+      } else if (/^#{1,6}\s/.test(l)) {
+        out.push(`<p><strong>${inline(l.replace(/^#+\s*/, ""))}</strong></p>`);
+      } else if (l.trim()) {
+        out.push(`<p>${inline(l)}</p>`);
+      }
+    }
+    return out.join("");
+  }
+
+  function show(result) {
+    if (result.reply !== undefined) {
+      add("msg agent md").innerHTML = markdown(result.reply);
+      speak(result.reply);
+      return;
+    }
+    waiting = true;
+    setBusy(false);
+    const decisions = {};
+    const items = result.approvals;
+    for (const a of items) {
+      const card = add("card");
+      card.append(Object.assign(document.createElement("div"), { className: "tool", textContent: a.tool }));
+      card.append(Object.assign(document.createElement("div"), { className: "sum", textContent: a.summary }));
+      const row = Object.assign(document.createElement("div"), { className: "row" });
+      const yes = Object.assign(document.createElement("button"), { className: "approve", type: "button", textContent: "Approve" });
+      const no = Object.assign(document.createElement("button"), { className: "reject", type: "button", textContent: "Reject" });
+      const why = Object.assign(document.createElement("input"), {
+        className: "why", type: "text", maxLength: 500, placeholder: "Reason, if you reject (optional)",
+      });
+      row.append(yes, no, why);
+      card.append(row);
+      const decide = (approved) => {
+        const reason = approved ? undefined : why.value.trim() || undefined;
+        decisions[a.id] = { approved, reason };
+        row.replaceWith(Object.assign(document.createElement("div"), {
+          className: "verdict", textContent: approved ? "Approved" : "Rejected",
+        }));
+        card.classList.add("done");
+        if (Object.keys(decisions).length === items.length) submit(decisions);
+      };
+      yes.onclick = () => decide(true);
+      no.onclick = () => decide(false);
+    }
+    speak(items.length === 1 ? "I need your approval." : `I need ${items.length} approvals.`);
+  }
+
+  async function submit(decisions) {
+    waiting = false;
+    await run(() => call("/api/decide", { thread, decisions }));
+  }
+
+  async function run(fn) {
+    setBusy(true);
+    const dots = add("typing", "{{NAME}} is working…");
+    try { show(await fn()); }
+    catch (e) { add("err", String(e.message || e)); }
+    finally { dots.remove(); setBusy(false); text.focus(); }
+  }
+
+  function el(tag, cls, text) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  function renderGroups(groups) {
+    const box = $("groups");
+    box.textContent = "";
+    for (const g of groups) {
+      const card = el("section", "group" + (g.enabled ? "" : " off"));
+      const head = el("div", "group-head");
+      head.append(el("span", "dot"), el("span", "", g.name), el("span", "state", g.enabled ? "on" : "off"));
+      card.append(head);
+      if (!g.enabled) {
+        const m = el("div", "missing");
+        m.append(document.createTextNode("Missing: "));
+        g.missing.forEach((k, i) => { if (i) m.append(document.createTextNode(", ")); m.append(el("code", "", k)); });
+        m.append(el("div", "keys", g.setup));
+        card.append(m);
+      }
+      const ul = el("ul");
+      for (const t of g.catalog) {
+        const li = el("li", "", t.name);
+        if (t.approval) li.append(el("span", "tag", "approval"));
+        ul.append(li);
+      }
+      card.append(ul);
+      box.append(card);
+    }
+  }
+
+  $("toggle").onclick = () => {
+    const open = document.body.classList.toggle("tools-open");
+    $("toggle").setAttribute("aria-expanded", String(open));
+  };
+
+  async function start() {
+    log.textContent = "";
+    waiting = false;
+    try {
+      const info = await call("/api/thread");
+      thread = info.thread;
+      $("meta").textContent = [info.model, info.keys && `keys: ${info.keys}`].filter(Boolean).join(" — ");
+      renderGroups(info.groups || []);
+      if (!info.speech) { mic.disabled = true; mic.title = "Speech to text is not set up"; }
+      add("hint", "Ask {{NAME}} a question. {{NAME}} asks you to approve each change.");
+    } catch (e) { add("err", String(e.message || e)); }
+    setBusy(false);
+  }
+
+  $("form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const t = text.value.trim();
+    if (!t || busy || waiting || !thread) return;
+    text.value = ""; grow();
+    add("msg me", t);
+    run(() => call("/api/say", { thread, text: t }));
+  });
+  text.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("form").requestSubmit(); }
+  });
+  const grow = () => { text.style.height = "auto"; text.style.height = Math.min(text.scrollHeight, 180) + "px"; };
+  text.addEventListener("input", grow);
+  $("new").onclick = start;
+
+  // Microphone: record in the page, then the agent turns the audio into text
+  // (POST /api/transcribe). It works in every browser with a microphone.
+  const SPEECH_RMS = 0.02;     // louder than this counts as speech
+  const PAUSE_MS = 1500;       // stop this long after the speech ends
+  const NO_SPEECH_MS = 8000;   // give up when nobody speaks
+  const MAX_MS = 110000;       // the server takes about two minutes
+
+  let recording = null;
+
+  function wavFrom(buffer) {
+    const data = buffer.getChannelData(0), rate = buffer.sampleRate;
+    const out = new DataView(new ArrayBuffer(44 + data.length * 2));
+    const str = (o, s) => { for (let i = 0; i < s.length; i++) out.setUint8(o + i, s.charCodeAt(i)); };
+    str(0, "RIFF"); out.setUint32(4, 36 + data.length * 2, true); str(8, "WAVE");
+    str(12, "fmt "); out.setUint32(16, 16, true); out.setUint16(20, 1, true); out.setUint16(22, 1, true);
+    out.setUint32(24, rate, true); out.setUint32(28, rate * 2, true); out.setUint16(32, 2, true); out.setUint16(34, 16, true);
+    str(36, "data"); out.setUint32(40, data.length * 2, true);
+    for (let i = 0; i < data.length; i++) {
+      const v = Math.max(-1, Math.min(1, data[i]));
+      out.setInt16(44 + i * 2, v < 0 ? v * 0x8000 : v * 0x7fff, true);
+    }
+    return new Uint8Array(out.buffer);
+  }
+
+  async function toWav16k(blob) {
+    const ctx = new AudioContext();
+    try {
+      const decoded = await ctx.decodeAudioData(await blob.arrayBuffer());
+      const frames = Math.ceil(decoded.duration * 16000);
+      const off = new OfflineAudioContext(1, frames, 16000);
+      const src = off.createBufferSource();
+      src.buffer = decoded;
+      src.connect(off.destination);
+      src.start();
+      return wavFrom(await off.startRendering());
+    } finally { ctx.close(); }
+  }
+
+  function base64(bytes) {
+    let s = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return btoa(s);
+  }
+
+  function setMic(state) {
+    mic.classList.toggle("on", state === "listening");
+    mic.disabled = state === "working";
+    mic.title = state === "listening" ? "Stop" : state === "working" ? "Turning speech into text" : "Speak";
+    text.placeholder = state === "listening" ? "Listening… click the microphone to stop" : state === "working" ? "Turning speech into text…" : "Message {{NAME}}";
+  }
+
+  async function startRecording() {
+    if (!navigator.mediaDevices || !window.MediaRecorder) { add("err", "Microphone: this browser cannot record audio."); return; }
+    let stream;
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); }
+    catch (e) { add("err", "Microphone: " + (e.name === "NotAllowedError" ? "access was blocked. Allow the microphone for this page." : e.message)); return; }
+    if ("speechSynthesis" in window) speechSynthesis.cancel();
+
+    const chunks = [], rec = new MediaRecorder(stream);
+    const ctx = new AudioContext(), analyser = ctx.createAnalyser();
+    analyser.fftSize = 2048;
+    ctx.createMediaStreamSource(stream).connect(analyser);
+    const buf = new Float32Array(analyser.fftSize);
+    const t0 = Date.now();
+    let heard = false, lastLoud = t0;
+
+    const timer = setInterval(() => {
+      analyser.getFloatTimeDomainData(buf);
+      let sum = 0;
+      for (const v of buf) sum += v * v;
+      const now = Date.now();
+      if (Math.sqrt(sum / buf.length) > SPEECH_RMS) { heard = true; lastLoud = now; }
+      const paused = heard && $("autosend").checked && now - lastLoud > PAUSE_MS;
+      if (paused || (!heard && now - t0 > NO_SPEECH_MS) || now - t0 > MAX_MS) stop();
+    }, 100);
+
+    function stop() { if (rec.state !== "inactive") rec.stop(); }
+
+    rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+    rec.onstop = async () => {
+      clearInterval(timer);
+      stream.getTracks().forEach((t) => t.stop());
+      ctx.close();
+      recording = null;
+      if (!heard) { setMic("idle"); add("err", "Microphone: no speech heard."); return; }
+      setMic("working");
+      try {
+        const wav = await toWav16k(new Blob(chunks, { type: rec.mimeType }));
+        const { text: said } = await call("/api/transcribe", { audio: base64(wav) });
+        if (!said) { add("err", "Microphone: no words found in the recording."); return; }
+        text.value = (text.value ? text.value.trimEnd() + " " : "") + said;
+        grow();
+        if ($("autosend").checked) $("form").requestSubmit(); else text.focus();
+      } catch (e) {
+        add("err", "Microphone: " + (e.message || e));
+      } finally { setMic("idle"); }
+    };
+
+    recording = { stop };
+    rec.start(250);
+    setMic("listening");
+  }
+
+  mic.onclick = () => { if (recording) recording.stop(); else startRecording(); };
+
+  start();
+})();
+</script>
+</body>
+</html>
