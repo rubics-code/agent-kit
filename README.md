@@ -12,6 +12,14 @@ Node 24 or later.
 npm install @rubics-code/agent-kit
 ```
 
+## Make a new agent
+
+```bash
+npx @rubics-code/agent-kit init scout
+```
+
+This makes `agents/scout/` with the agent as data (`src/agent.ts`), an example tool group with a write tool behind the approval gate, a system prompt, tests, evals, a Dockerfile, and an entrypoint for Agent Vault. `--dir` sets another folder, and `--operator` names who approves the actions (default: your git `user.name`). The agent is its own npm package with its own `package-lock.json`, which the Dockerfile needs.
+
 ## An agent
 
 ```ts
