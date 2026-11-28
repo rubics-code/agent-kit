@@ -191,3 +191,20 @@ a:hover { color: #f7a9b0; }
 .link-btn { border: 0; background: transparent; color: var(--accent-soft); font-size: 12px; }
 .connect-foot { padding: 20px 28px 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .connect-foot .btn { height: 40px; }
+
+/* Dashboard */
+.dash-head { flex-shrink: 0; display: flex; flex-direction: column; gap: 14px; padding: 20px 24px 16px; border-bottom: 1px solid var(--line-soft); }
+.dash-title-row { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.dash-title-row h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+.ask-bar { display: flex; align-items: center; gap: 10px; padding: 6px; background: var(--field); border: 1px solid var(--line-field); border-radius: 14px; }
+.ask-bar select { height: 36px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--chip); color: var(--text); font: inherit; font-size: 13px; }
+.ask-bar input { flex: 1; min-width: 0; height: 36px; background: transparent; border: 0; outline: none; color: var(--text); font: inherit; font-size: 15px; }
+.ask-status { white-space: normal; }
+.dash-grid { flex: 1; min-height: 0; overflow: auto; padding: 20px 24px; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; align-content: start; }
+.dash-card, .tool-card { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+.dash-card-head, .tool-card-head { display: flex; align-items: center; gap: 10px; padding: 12px 12px 12px 14px; border-bottom: 1px solid var(--line); }
+.dash-card-body, .tool-card-body { padding: 10px 14px 12px; }
+.dash-card-foot { padding: 10px 14px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); text-decoration: none; }
+.dash-empty { border: 1px dashed var(--line-field); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; justify-content: center; gap: 10px; color: var(--muted); font-size: 13px; line-height: 1.5; min-height: 140px; }
+.btn.small { height: 30px; padding: 0 10px; font-size: 12px; font-weight: 500; }
+@media (max-width: 820px) { .dash-head, .dash-grid { padding-left: 12px; padding-right: 12px; } .dash-grid { grid-template-columns: 1fr; } }

@@ -9,6 +9,7 @@ import { IconMenu } from "./icons";
 
 export type ThreadActions = {
   send: (text: string) => void;
+  addToDashboard: (itemId: string) => Promise<void>;
   action: (a: ActionPayload) => void;
   decide: (confirmationId: string, approve: boolean) => void;
 };
@@ -122,7 +123,11 @@ function AgentMsg({ agent, color, items, busy, actions }: { agent: Agent; color:
             case "error":
               return <p key={it.id} className="error-line" role="alert">{it.text}</p>;
             case "surface":
-              return <A2uiBlock key={it.id} messages={it.messages} onAction={busy ? undefined : actions.action} />;
+              return it.title ? (
+                <ToolCard key={it.id} item={it} onAdd={() => actions.addToDashboard(it.id)} />
+              ) : (
+                <A2uiBlock key={it.id} messages={it.messages} onAction={busy ? undefined : actions.action} />
+              );
             case "approval":
               return <Approval key={it.id} item={it} busy={busy} onAction={actions.action} onDecide={(ok) => actions.decide(it.confirmationId, ok)} />;
             default:
@@ -131,6 +136,34 @@ function AgentMsg({ agent, color, items, busy, actions }: { agent: Agent; color:
         })}
       </div>
     </div>
+  );
+}
+
+function ToolCard({ item, onAdd }: { item: Extract<Item, { kind: "surface" }>; onAdd: () => Promise<void> }) {
+  const [state, setState] = useState<"idle" | "busy" | "error">("idle");
+  return (
+    <section className="tool-card" aria-label={item.title}>
+      <div className="tool-card-head">
+        <span className="kit-card-title">{item.title}</span>
+        {item.onDashboard ? (
+          <span className="ok-line">On the dashboard</span>
+        ) : (
+          <button
+            type="button"
+            className="btn small"
+            disabled={state === "busy"}
+            onClick={() => {
+              setState("busy");
+              onAdd().then(() => setState("idle"), () => setState("error"));
+            }}
+          >
+            Add to dashboard
+          </button>
+        )}
+      </div>
+      {state === "error" && <div className="error-line" role="alert">The agent did not keep the card.</div>}
+      <div className="tool-card-body"><A2uiBlock messages={item.messages} /></div>
+    </section>
   );
 }
 

@@ -55,3 +55,15 @@ describe("titleFrom", () => {
     expect(titleFrom("  ")).toBe("New thread");
   });
 });
+
+describe("tool cards", () => {
+  it("shows a card from a tool response, and notes a dashboard change", () => {
+    const card = { title: "Notes", a2ui: [{ version: "1.0", createSurface: { surfaceId: "card-1", catalogId: "k" } }] };
+    let t = applyEvent(newThread("c", "a", 0), { artifactUpdate: { taskId: "t", contextId: "c", artifact: { artifactId: "x", parts: [{ data: { name: "list_notes", id: "1" }, metadata: { adk_type: "function_call" } }] } } }, 1);
+    t = applyEvent(t, { artifactUpdate: { taskId: "t", contextId: "c", artifact: { artifactId: "x", parts: [{ data: { name: "list_notes", id: "1", response: { notes: [], card } }, metadata: { adk_type: "function_response" } }] } } }, 2);
+    expect(t.items.at(-1)).toMatchObject({ kind: "surface", title: "Notes", surfaceId: "card-1" });
+    expect(t.dashboardAt).toBeUndefined();
+    t = applyEvent(t, { artifactUpdate: { taskId: "t", contextId: "c", artifact: { artifactId: "y", parts: [{ data: { name: "put_dashboard_card", id: "2", response: { status: "on the dashboard" } }, metadata: { adk_type: "function_response" } }] } } }, 3);
+    expect(t.dashboardAt).toBe(3);
+  });
+});

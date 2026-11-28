@@ -28,12 +28,14 @@ import (
 	"google.golang.org/adk/v2/session/database"
 
 	"github.com/rubics-code/agent-kit/kit/a2ui"
+	"github.com/rubics-code/agent-kit/kit/dashboard"
 	"github.com/rubics-code/agent-kit/kit/fakemodel"
 	"github.com/rubics-code/agent-kit/kit/taskstore"
 )
 
 const instruction = `You are the dev agent of the Rubics Code agent kit. You keep a small notebook.
 Use list_notes to read the notes. Use write_note to add or change a note. Always call write_note for a write.
+When a person asks to keep something on the dashboard, call put_dashboard_card. It needs no approval.
 Never say that a note is written or waits for approval unless write_note said so.
 A person must approve each write_note call. When a write waits for approval, say so in one short sentence and stop.
 Answer in short, plain sentences.`
@@ -108,6 +110,15 @@ func build(ctx context.Context, c config) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
+	dash, err := dashboard.New(db, c.name)
+	if err != nil {
+		return nil, err
+	}
+	put, err := dash.Tool()
+	if err != nil {
+		return nil, err
+	}
+	tools = append(tools, put)
 
 	a, err := llmagent.New(llmagent.Config{
 		Name:        c.name,
@@ -119,11 +130,11 @@ func build(ctx context.Context, c config) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	return routes(a, sessions, tasks, c)
+	return routes(a, sessions, tasks, dash, c)
 }
 
 // routes serves A2A on /a2a, the ADK REST API on /api, and the agent card.
-func routes(a agent.Agent, sessions session.Service, tasks *taskstore.Store, c config) (http.Handler, error) {
+func routes(a agent.Agent, sessions session.Service, tasks *taskstore.Store, dash *dashboard.Store, c config) (http.Handler, error) {
 	mux := http.NewServeMux()
 	rest, err := adkrest.NewServer(adkrest.ServerConfig{
 		SessionService: sessions,
@@ -161,5 +172,7 @@ func routes(a agent.Agent, sessions session.Service, tasks *taskstore.Store, c c
 	})
 	mux.Handle(a2asrv.WellKnownAgentCardPath, cors(c.origins, a2asrv.NewStaticAgentCardHandler(card)))
 	mux.Handle("/a2a", cors(c.origins, a2asrv.NewJSONRPCHandler(a2asrv.NewHandler(exec, a2asrv.WithTaskStore(tasks)))))
+	mux.Handle("/kit/dashboard", cors(c.origins, dash.Handler()))
+	mux.Handle("/kit/dashboard/", cors(c.origins, dash.Handler()))
 	return mux, nil
 }

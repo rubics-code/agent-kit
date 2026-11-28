@@ -19,7 +19,7 @@ export type Item =
       decidedAt?: number;
       at: number;
     }
-  | { kind: "surface"; id: string; surfaceId: string; messages: unknown[]; at: number }
+  | { kind: "surface"; id: string; surfaceId: string; messages: unknown[]; at: number; title?: string; onDashboard?: boolean }
   | { kind: "error"; id: string; text: string; at: number };
 
 export type Thread = {
@@ -31,6 +31,7 @@ export type Thread = {
   pendingTaskId?: string;
   state?: string;
   streaming?: string; // the reply text while it streams
+  dashboardAt?: number; // when this thread last changed the dashboard
 };
 
 export function newThread(id: string, agentId: string, now: number): Thread {
@@ -94,7 +95,8 @@ function applyArtifact(t: Thread, a: Artifact, last: boolean, now: number): Thre
 }
 
 function applyParts(t: Thread, parts: Part[], now: number): Thread {
-  let items = [...t.items];
+  const items = [...t.items];
+  let dashboardChanged = false;
   for (const p of parts) {
     const type = adkType(p);
     if (type === "function_call") {
@@ -111,6 +113,11 @@ function applyParts(t: Thread, parts: Part[], now: number): Thread {
         const state = err.includes("rejected") ? "rejected" : err ? "failed" : st.startsWith("waiting") ? "waiting" : "done";
         items[i] = { ...tool, state, ms: now - tool.at };
       }
+      const card = c.response?.card as { title?: string; a2ui?: unknown[] } | undefined;
+      if (card?.a2ui?.length) {
+        items.push({ kind: "surface", id: itemId(), surfaceId: surfaceOf(card.a2ui) ?? itemId(), messages: card.a2ui, title: card.title, at: now });
+      }
+      if (c.name === "put_dashboard_card" && !c.response?.error) dashboardChanged = true;
     } else if (p.metadata?.mimeType === A2UI_MIME) {
       const messages = (p.data as unknown[]) ?? [];
       items.push({ kind: "surface", id: itemId(), surfaceId: surfaceOf(messages) ?? itemId(), messages, at: now });
@@ -120,7 +127,11 @@ function applyParts(t: Thread, parts: Part[], now: number): Thread {
       else items.push({ kind: "agent", id: itemId(), text: p.text, at: now });
     }
   }
-  return { ...t, items, updatedAt: now };
+  return { ...t, items, updatedAt: now, ...(dashboardChanged ? { dashboardAt: now } : {}) };
+}
+
+export function markOnDashboard(t: Thread, itemId: string): Thread {
+  return { ...t, items: t.items.map((i) => (i.id === itemId && i.kind === "surface" ? { ...i, onDashboard: true } : i)) };
 }
 
 function applyInputRequired(t: Thread, parts: Part[], now: number): Thread {

@@ -9,6 +9,7 @@ import (
 	"google.golang.org/adk/v2/tool/functiontool"
 	"gorm.io/gorm"
 
+	"github.com/rubics-code/agent-kit/kit/a2ui"
 	"github.com/rubics-code/agent-kit/kit/approval"
 )
 
@@ -22,7 +23,8 @@ type listArgs struct {
 }
 
 type listResult struct {
-	Notes []Note `json:"notes"`
+	Notes []Note         `json:"notes"`
+	Card  *a2ui.ToolCard `json:"card,omitempty"`
 }
 
 type writeArgs struct {
@@ -50,14 +52,21 @@ func noteTools(db *gorm.DB) ([]tool.Tool, error) {
 	list, err := functiontool.New(functiontool.Config{
 		Name:        "list_notes",
 		Description: "List the notes in the notebook, with their text.",
-	}, func(_ agent.Context, a listArgs) (listResult, error) {
+	}, func(ctx agent.Context, a listArgs) (listResult, error) {
 		notes := []Note{}
 		q := db.Order("title")
 		if a.Prefix != "" {
 			q = q.Where("title LIKE ? ESCAPE '\\'", strings.NewReplacer(`\`, `\\`, "%", `\%`, "_", `\_`).Replace(a.Prefix)+"%")
 		}
-		err := q.Find(&notes).Error
-		return listResult{Notes: notes}, err
+		if err := q.Find(&notes).Error; err != nil {
+			return listResult{}, err
+		}
+		rows := make([][]string, len(notes))
+		for i, n := range notes {
+			rows[i] = []string{n.Title, n.Body}
+		}
+		card := &a2ui.ToolCard{Title: "Notes", A2UI: a2ui.TableBody("card-"+ctx.FunctionCallID(), []string{"Title", "Text"}, rows, 0)}
+		return listResult{Notes: notes, Card: card}, nil
 	})
 	if err != nil {
 		return nil, err
