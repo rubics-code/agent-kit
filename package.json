@@ -30,9 +30,10 @@
     }
   },
   "bin": {
-    "agent-kit": "./dist/cli/bin.js"
+    "agent-kit": "bin/agent-kit.js"
   },
   "files": [
+    "bin",
     "dist",
     "template",
     "README.md",

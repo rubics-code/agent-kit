@@ -1,7 +1,7 @@
 // Proves that the published package works on its own: pack (prepack builds
 // dist/), install the tarball into an empty folder with npm, run a consumer
 // from plain Node, and type-check a consumer file.
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -12,6 +12,11 @@ const work = mkdtempSync(join(tmpdir(), "agent-kit-pack-"));
 const run = (cmd: string, args: string[], cwd: string) => execFileSync(cmd, args, { cwd, stdio: "inherit" });
 
 try {
+  // npm publish quietly removes a package.json field that it thinks is wrong,
+  // for example a bin path that does not exist yet.
+  const dry = spawnSync("npm", ["publish", "--dry-run"], { cwd: root, encoding: "utf8" });
+  if (/errors corrected|invalid and removed/.test(dry.stderr)) throw new Error(`npm publish changes package.json:\n${dry.stderr}`);
+
   run("npm", ["pack", "--silent", "--pack-destination", work], root);
   const tarball = readdirSync(work).find((f) => f.endsWith(".tgz"));
   if (!tarball) throw new Error("npm pack made no tarball");
