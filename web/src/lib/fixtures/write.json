@@ -1,0 +1,273 @@
+[
+ {
+  "task": {
+   "id": "01a22077-f8ff-742e-82ab-c89000043426",
+   "contextId": "c2",
+   "history": [
+    {
+     "messageId": "m2",
+     "contextId": "c2",
+     "metadata": {
+      "a2uiRendererCapabilities": {
+       "1.0": {
+        "supportedCatalogIds": [
+         "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+        ]
+       }
+      }
+     },
+     "parts": [
+      {
+       "text": "Write a note called Groceries with the text: milk, eggs."
+      }
+     ],
+     "role": "ROLE_USER"
+    }
+   ],
+   "metadata": {
+    "https://google.github.io/adk-docs/a2a/a2a-extension/": true
+   },
+   "status": {
+    "state": "TASK_STATE_SUBMITTED"
+   }
+  }
+ },
+ {
+  "statusUpdate": {
+   "contextId": "c2",
+   "status": {
+    "state": "TASK_STATE_WORKING",
+    "timestamp": "2026-11-28T04:44:23.167Z"
+   },
+   "taskId": "01a22077-f8ff-742e-82ab-c89000043426",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_session_id": "c2",
+    "adk_user_id": "A2A_USER_c2",
+    "https://google.github.io/adk-docs/a2a/a2a-extension/": true
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22077-f900-7c9a-87b7-9d1d4ea421c5",
+    "parts": [
+     {
+      "data": {
+       "args": {
+        "body": "milk, eggs",
+        "title": "Groceries"
+       },
+       "id": "fake-write_note",
+       "name": "write_note"
+      },
+      "metadata": {
+       "adk_is_long_running": false,
+       "adk_type": "function_call"
+      }
+     }
+    ]
+   },
+   "contextId": "c2",
+   "taskId": "01a22077-f8ff-742e-82ab-c89000043426",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-bb818735-c9fd-4f8e-a167-9ac24f983a93",
+    "adk_partial": false,
+    "adk_session_id": "c2",
+    "adk_usage_metadata": {
+     "candidatesTokenCount": 10,
+     "promptTokenCount": 100,
+     "totalTokenCount": 110
+    },
+    "adk_user_id": "A2A_USER_c2"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "append": true,
+   "artifact": {
+    "artifactId": "01a22077-f900-7c9a-87b7-9d1d4ea421c5",
+    "parts": [
+     {
+      "data": {
+       "id": "fake-write_note",
+       "name": "write_note",
+       "response": {
+        "status": "waiting for approval"
+       }
+      },
+      "metadata": {
+       "adk_type": "function_response"
+      }
+     }
+    ]
+   },
+   "contextId": "c2",
+   "taskId": "01a22077-f8ff-742e-82ab-c89000043426",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-bb818735-c9fd-4f8e-a167-9ac24f983a93",
+    "adk_partial": false,
+    "adk_session_id": "c2",
+    "adk_user_id": "A2A_USER_c2"
+   }
+  }
+ },
+ {
+  "statusUpdate": {
+   "contextId": "c2",
+   "status": {
+    "message": {
+     "messageId": "01a22077-f901-7635-8a2e-bf7b0936a295",
+     "parts": [
+      {
+       "data": {
+        "args": {
+         "originalFunctionCall": {
+          "args": {
+           "body": "milk, eggs",
+           "title": "Groceries"
+          },
+          "id": "fake-write_note",
+          "name": "write_note"
+         },
+         "toolConfirmation": {
+          "confirmed": false,
+          "hint": "Write the note \"Groceries\" (10 characters): \"milk, eggs\"",
+          "payload": {
+           "args": {
+            "body": "milk, eggs",
+            "title": "Groceries"
+           },
+           "argsHash": "sha256:522720b5caf632173232f4b5d7935e3a695be3916efc6836cd225c8546fc3263",
+           "summary": "Write the note \"Groceries\" (10 characters): \"milk, eggs\"",
+           "tool": "write_note"
+          }
+         }
+        },
+        "id": "adk-6403e832-6c6f-42e8-a23c-c163a07f7bde",
+        "name": "adk_request_confirmation"
+       },
+       "metadata": {
+        "adk_is_long_running": true,
+        "adk_type": "function_call"
+       }
+      },
+      {
+       "data": [
+        {
+         "createSurface": {
+          "catalogId": "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",
+          "surfaceId": "approval-adk-6403e832-6c6f-42e8-a23c-c163a07f7bde"
+         },
+         "version": "1.0"
+        },
+        {
+         "updateComponents": {
+          "components": [
+           {
+            "child": "body",
+            "component": "Card",
+            "id": "root"
+           },
+           {
+            "children": [
+             "title",
+             "summary",
+             "hash",
+             "buttons"
+            ],
+            "component": "Column",
+            "id": "body"
+           },
+           {
+            "component": "Text",
+            "id": "title",
+            "text": "Approval: write_note"
+           },
+           {
+            "component": "Text",
+            "id": "summary",
+            "text": "Write the note \"Groceries\" (10 characters): \"milk, eggs\""
+           },
+           {
+            "component": "Text",
+            "id": "hash",
+            "text": "Args hash: sha256:522720b5caf632173232f4b5d7935e3a695be3916efc6836cd225c8546fc3263"
+           },
+           {
+            "children": [
+             "approve",
+             "reject"
+            ],
+            "component": "Row",
+            "id": "buttons"
+           },
+           {
+            "action": {
+             "event": {
+              "context": {
+               "argsHash": "sha256:522720b5caf632173232f4b5d7935e3a695be3916efc6836cd225c8546fc3263",
+               "confirmationId": "adk-6403e832-6c6f-42e8-a23c-c163a07f7bde"
+              },
+              "name": "kit.approve"
+             }
+            },
+            "child": "approve_label",
+            "component": "Button",
+            "id": "approve",
+            "variant": "primary"
+           },
+           {
+            "component": "Text",
+            "id": "approve_label",
+            "text": "Approve"
+           },
+           {
+            "action": {
+             "event": {
+              "context": {
+               "argsHash": "sha256:522720b5caf632173232f4b5d7935e3a695be3916efc6836cd225c8546fc3263",
+               "confirmationId": "adk-6403e832-6c6f-42e8-a23c-c163a07f7bde"
+              },
+              "name": "kit.reject"
+             }
+            },
+            "child": "reject_label",
+            "component": "Button",
+            "id": "reject",
+            "variant": "default"
+           },
+           {
+            "component": "Text",
+            "id": "reject_label",
+            "text": "Reject"
+           }
+          ],
+          "surfaceId": "approval-adk-6403e832-6c6f-42e8-a23c-c163a07f7bde"
+         },
+         "version": "1.0"
+        }
+       ],
+       "metadata": {
+        "mimeType": "application/a2ui+json"
+       }
+      }
+     ],
+     "role": "ROLE_AGENT"
+    },
+    "state": "TASK_STATE_INPUT_REQUIRED",
+    "timestamp": "2026-11-28T04:44:23.169Z"
+   },
+   "taskId": "01a22077-f8ff-742e-82ab-c89000043426",
+   "metadata": {
+    "https://google.github.io/adk-docs/a2a/a2a-extension/": true
+   }
+  }
+ }
+]

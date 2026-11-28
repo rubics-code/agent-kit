@@ -1,0 +1,482 @@
+[
+ {
+  "task": {
+   "id": "01a22077-cf65-75e3-910c-639d6e86525b",
+   "contextId": "c1",
+   "history": [
+    {
+     "messageId": "m1",
+     "contextId": "c1",
+     "metadata": {
+      "a2uiRendererCapabilities": {
+       "1.0": {
+        "supportedCatalogIds": [
+         "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+        ]
+       }
+      }
+     },
+     "parts": [
+      {
+       "text": "say hello please"
+      }
+     ],
+     "role": "ROLE_USER"
+    }
+   ],
+   "metadata": {
+    "https://google.github.io/adk-docs/a2a/a2a-extension/": true
+   },
+   "status": {
+    "state": "TASK_STATE_SUBMITTED"
+   }
+  }
+ },
+ {
+  "statusUpdate": {
+   "contextId": "c1",
+   "status": {
+    "state": "TASK_STATE_WORKING",
+    "timestamp": "2026-11-28T04:44:12.518Z"
+   },
+   "taskId": "01a22077-cf65-75e3-910c-639d6e86525b",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_session_id": "c1",
+    "adk_user_id": "A2A_USER_c1",
+    "https://google.github.io/adk-docs/a2a/a2a-extension/": true
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22077-cf69-7eb9-8bef-bf9241e780e5",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "text": "Hello. ",
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c1",
+   "taskId": "01a22077-cf65-75e3-910c-639d6e86525b",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-286dfc1d-ca61-456b-92cf-ceb6ae46955e",
+    "adk_partial": true,
+    "adk_session_id": "c1",
+    "adk_user_id": "A2A_USER_c1"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22077-cf69-7eb9-8bef-bf9241e780e5",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "text": "I ",
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c1",
+   "taskId": "01a22077-cf65-75e3-910c-639d6e86525b",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-286dfc1d-ca61-456b-92cf-ceb6ae46955e",
+    "adk_partial": true,
+    "adk_session_id": "c1",
+    "adk_user_id": "A2A_USER_c1"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22077-cf69-7eb9-8bef-bf9241e780e5",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "text": "am ",
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c1",
+   "taskId": "01a22077-cf65-75e3-910c-639d6e86525b",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-286dfc1d-ca61-456b-92cf-ceb6ae46955e",
+    "adk_partial": true,
+    "adk_session_id": "c1",
+    "adk_user_id": "A2A_USER_c1"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22077-cf69-7eb9-8bef-bf9241e780e5",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "text": "the ",
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c1",
+   "taskId": "01a22077-cf65-75e3-910c-639d6e86525b",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-286dfc1d-ca61-456b-92cf-ceb6ae46955e",
+    "adk_partial": true,
+    "adk_session_id": "c1",
+    "adk_user_id": "A2A_USER_c1"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22077-cf69-7eb9-8bef-bf9241e780e5",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "text": "dev ",
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c1",
+   "taskId": "01a22077-cf65-75e3-910c-639d6e86525b",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-286dfc1d-ca61-456b-92cf-ceb6ae46955e",
+    "adk_partial": true,
+    "adk_session_id": "c1",
+    "adk_user_id": "A2A_USER_c1"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22077-cf69-7eb9-8bef-bf9241e780e5",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "text": "agent, ",
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c1",
+   "taskId": "01a22077-cf65-75e3-910c-639d6e86525b",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-286dfc1d-ca61-456b-92cf-ceb6ae46955e",
+    "adk_partial": true,
+    "adk_session_id": "c1",
+    "adk_user_id": "A2A_USER_c1"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22077-cf69-7eb9-8bef-bf9241e780e5",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "text": "and ",
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c1",
+   "taskId": "01a22077-cf65-75e3-910c-639d6e86525b",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-286dfc1d-ca61-456b-92cf-ceb6ae46955e",
+    "adk_partial": true,
+    "adk_session_id": "c1",
+    "adk_user_id": "A2A_USER_c1"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22077-cf69-7eb9-8bef-bf9241e780e5",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "text": "I ",
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c1",
+   "taskId": "01a22077-cf65-75e3-910c-639d6e86525b",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-286dfc1d-ca61-456b-92cf-ceb6ae46955e",
+    "adk_partial": true,
+    "adk_session_id": "c1",
+    "adk_user_id": "A2A_USER_c1"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22077-cf69-7eb9-8bef-bf9241e780e5",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "text": "run ",
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c1",
+   "taskId": "01a22077-cf65-75e3-910c-639d6e86525b",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-286dfc1d-ca61-456b-92cf-ceb6ae46955e",
+    "adk_partial": true,
+    "adk_session_id": "c1",
+    "adk_user_id": "A2A_USER_c1"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22077-cf69-7eb9-8bef-bf9241e780e5",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "text": "on ",
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c1",
+   "taskId": "01a22077-cf65-75e3-910c-639d6e86525b",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-286dfc1d-ca61-456b-92cf-ceb6ae46955e",
+    "adk_partial": true,
+    "adk_session_id": "c1",
+    "adk_user_id": "A2A_USER_c1"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22077-cf69-7eb9-8bef-bf9241e780e5",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "text": "the ",
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c1",
+   "taskId": "01a22077-cf65-75e3-910c-639d6e86525b",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-286dfc1d-ca61-456b-92cf-ceb6ae46955e",
+    "adk_partial": true,
+    "adk_session_id": "c1",
+    "adk_user_id": "A2A_USER_c1"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22077-cf69-7eb9-8bef-bf9241e780e5",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "text": "fake ",
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c1",
+   "taskId": "01a22077-cf65-75e3-910c-639d6e86525b",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-286dfc1d-ca61-456b-92cf-ceb6ae46955e",
+    "adk_partial": true,
+    "adk_session_id": "c1",
+    "adk_user_id": "A2A_USER_c1"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22077-cf69-7eb9-8bef-bf9241e780e5",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "text": "model.",
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c1",
+   "taskId": "01a22077-cf65-75e3-910c-639d6e86525b",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-286dfc1d-ca61-456b-92cf-ceb6ae46955e",
+    "adk_partial": true,
+    "adk_session_id": "c1",
+    "adk_user_id": "A2A_USER_c1"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22077-cf6a-77f3-b278-6405e94e9797",
+    "parts": [
+     {
+      "text": "Hello. I am the dev agent, and I run on the fake model."
+     }
+    ]
+   },
+   "contextId": "c1",
+   "taskId": "01a22077-cf65-75e3-910c-639d6e86525b",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-286dfc1d-ca61-456b-92cf-ceb6ae46955e",
+    "adk_partial": false,
+    "adk_session_id": "c1",
+    "adk_usage_metadata": {
+     "candidatesTokenCount": 10,
+     "promptTokenCount": 100,
+     "totalTokenCount": 110
+    },
+    "adk_user_id": "A2A_USER_c1"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22077-cf69-7eb9-8bef-bf9241e780e5",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "data": {},
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c1",
+   "lastChunk": true,
+   "taskId": "01a22077-cf65-75e3-910c-639d6e86525b",
+   "metadata": {
+    "adk_partial": true
+   }
+  }
+ },
+ {
+  "statusUpdate": {
+   "contextId": "c1",
+   "status": {
+    "state": "TASK_STATE_COMPLETED",
+    "timestamp": "2026-11-28T04:44:12.522Z"
+   },
+   "taskId": "01a22077-cf65-75e3-910c-639d6e86525b",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_session_id": "c1",
+    "adk_user_id": "A2A_USER_c1",
+    "https://google.github.io/adk-docs/a2a/a2a-extension/": true
+   }
+  }
+ }
+]
