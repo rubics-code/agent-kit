@@ -66,7 +66,7 @@ Set `INFISICAL_DOMAIN`, `INFISICAL_AGENT_VAULT_PROXY_ADDRESS`, `INFISICAL_AGENT_
 | `npm test` | The tests. `test/fixture.ts` is a test agent. |
 | `npm run type-check` | Type-checks `src/` and `test/`. |
 | `npm run build` | Compiles `src/` to `dist/` and copies the `.md` and `.html` files that the code reads. |
-| `npm run pack-check` | Packs the package, installs the tarball in an empty folder, runs a consumer, and type-checks a consumer file. |
+| `npm run pack-check` | Packs the package, installs the tarball in an empty folder, runs a consumer, type-checks a consumer file, and makes an agent with `init` that must pass its own type-check and tests. |
 
 ## Release
 

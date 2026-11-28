@@ -67,6 +67,15 @@ export const start: (c: AgentConfig) => Promise<void> = runAgent;
   );
   run(join(root, "node_modules/.bin/tsc"), ["-p", join(app, "tsconfig.json")], app);
   console.log("pack check: the types are ok");
+
+  // The init command: make an agent from the template, install it with this
+  // tarball, then run its type-check and tests.
+  run("npx", ["--no-install", "agent-kit", "init", "scout", "--operator", "Ada"], app);
+  const agent = join(app, "agents/scout");
+  run("npm", ["install", "--no-audit", "--no-fund", "--silent", join(work, tarball)], agent);
+  run("npm", ["run", "--silent", "type-check"], agent);
+  run("npm", ["test", "--silent"], agent);
+  console.log("pack check: the init command makes a working agent");
 } finally {
   rmSync(work, { recursive: true, force: true });
 }
