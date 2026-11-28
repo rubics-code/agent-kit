@@ -2,6 +2,9 @@ package a2ui
 
 import (
 	"encoding/json"
+	"flag"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -10,6 +13,8 @@ import (
 
 	"github.com/rubics-code/agent-kit/kit/approval"
 )
+
+var update = flag.Bool("update", false, "write the golden files")
 
 func TestBasicApprovalCardIsA2UIv1(t *testing.T) {
 	ap, _ := approval.NewApproval("write_note", "sum", map[string]any{"title": "t"})
@@ -47,5 +52,36 @@ func TestRenders(t *testing.T) {
 	m := &a2a.Message{Metadata: map[string]any{"a2uiRendererCapabilities": map[string]any{"1.0": map[string]any{"supportedCatalogIds": []any{BasicCatalog}}}}}
 	if !Renders(m, BasicCatalog) || Renders(m, "other") || Renders(&a2a.Message{}, BasicCatalog) || Renders(nil, BasicCatalog) {
 		t.Fatal("Renders is wrong")
+	}
+}
+
+func TestKitApprovalCard(t *testing.T) {
+	ap, _ := approval.NewApproval("write_note", "Write it", map[string]any{"title": "t", "body": "b"})
+	msgs := KitApprovalCard("call-2", ap)
+	b, _ := json.Marshal(msgs)
+	for _, want := range []string{KitCatalog, `"component":"Approval"`, `"summary":"Write it"`, `{"label":"body","value":"b","mono":true}`, ap.ArgsHash} {
+		if !strings.Contains(string(b), want) {
+			t.Fatalf("card lacks %s: %s", want, b)
+		}
+	}
+}
+
+// The web client renders this file in web/src/a2ui/kit.test.tsx, so the Go
+// card and the React catalog cannot drift apart. Run with -update to write it.
+func TestKitApprovalCardGolden(t *testing.T) {
+	ap, _ := approval.NewApproval("write_note", `Write the note "Groceries" (10 characters): "milk, eggs"`, map[string]any{"title": "Groceries", "body": "milk, eggs"})
+	got, _ := json.MarshalIndent(KitApprovalCard("call-1", ap), "", "  ")
+	path := filepath.Join("testdata", "kit_approval.json")
+	if *update {
+		if err := os.WriteFile(path, append(got, '\n'), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	want, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.TrimSpace(string(want)) != string(got) {
+		t.Fatalf("the card changed; run go test ./kit/a2ui -update and check web/src/a2ui/kit.test.tsx\n%s", got)
 	}
 }

@@ -1,0 +1,54 @@
+[
+  {
+    "createSurface": {
+      "catalogId": "https://github.com/rubics-code/agent-kit/catalogs/kit/v1",
+      "surfaceId": "approval-call-1"
+    },
+    "version": "1.0"
+  },
+  {
+    "updateComponents": {
+      "components": [
+        {
+          "approve": {
+            "event": {
+              "context": {
+                "argsHash": "sha256:522720b5caf632173232f4b5d7935e3a695be3916efc6836cd225c8546fc3263",
+                "confirmationId": "call-1"
+              },
+              "name": "kit.approve"
+            }
+          },
+          "argsHash": "sha256:522720b5caf632173232f4b5d7935e3a695be3916efc6836cd225c8546fc3263",
+          "component": "Approval",
+          "entries": [
+            {
+              "label": "body",
+              "value": "milk, eggs",
+              "mono": true
+            },
+            {
+              "label": "title",
+              "value": "Groceries",
+              "mono": true
+            }
+          ],
+          "id": "root",
+          "reject": {
+            "event": {
+              "context": {
+                "argsHash": "sha256:522720b5caf632173232f4b5d7935e3a695be3916efc6836cd225c8546fc3263",
+                "confirmationId": "call-1"
+              },
+              "name": "kit.reject"
+            }
+          },
+          "summary": "Write the note \"Groceries\" (10 characters): \"milk, eggs\"",
+          "tool": "write_note"
+        }
+      ],
+      "surfaceId": "approval-call-1"
+    },
+    "version": "1.0"
+  }
+]

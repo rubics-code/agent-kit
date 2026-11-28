@@ -149,14 +149,14 @@ func routes(a agent.Agent, sessions session.Service, tasks *taskstore.Store, c c
 		Skills:             adka2a.BuildAgentSkills(a),
 		Capabilities: a2a.AgentCapabilities{
 			Streaming:  true,
-			Extensions: []a2a.AgentExtension{a2ui.Extension(a2ui.BasicCatalog)},
+			Extensions: []a2a.AgentExtension{a2ui.Extension(a2ui.KitCatalog, a2ui.BasicCatalog)},
 		},
 	}
 	exec := adka2a.NewExecutor(adka2a.ExecutorConfig{
 		RunnerConfig:         runner.Config{AppName: a.Name(), Agent: a, SessionService: sessions},
 		RunConfig:            agent.RunConfig{StreamingMode: agent.StreamingModeSSE},
 		A2APartConverter:     a2ui.ToGenAI,
-		AfterExecuteCallback: a2ui.ApprovalCards(a2ui.BasicCatalog, a2ui.BasicApprovalCard),
+		AfterExecuteCallback: a2ui.ApprovalCards(a2ui.DefaultChoices...),
 	})
 	mux.Handle(a2asrv.WellKnownAgentCardPath, a2asrv.NewStaticAgentCardHandler(card))
 	mux.Handle("/a2a", a2asrv.NewJSONRPCHandler(a2asrv.NewHandler(exec, a2asrv.WithTaskStore(tasks))))

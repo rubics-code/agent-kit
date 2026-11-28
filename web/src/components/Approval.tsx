@@ -15,6 +15,9 @@ export function Approval({ item, busy, onAction, onDecide }: {
   const ap = item.approval;
   const title = `Approval: ${ap?.tool ?? "a tool call"}`;
   const decided = item.decision;
+  if (!decided && item.messages.length > 0) {
+    return <A2uiBlock messages={item.messages} onAction={busy ? undefined : onAction} />;
+  }
   return (
     <section className="approval" aria-label={title}>
       <div className="approval-head">
@@ -26,7 +29,7 @@ export function Approval({ item, busy, onAction, onDecide }: {
           </span>
         )}
       </div>
-      {decided || item.messages.length === 0 ? (
+      {(
         <>
           {ap && <p className="msg-text">{ap.summary}</p>}
           {ap && (
@@ -46,8 +49,6 @@ export function Approval({ item, busy, onAction, onDecide }: {
             </div>
           )}
         </>
-      ) : (
-        <A2uiBlock messages={item.messages} onAction={busy ? undefined : onAction} />
       )}
       <div className="foot">Code wrote this summary from the tool call. The model did not write it.</div>
     </section>
