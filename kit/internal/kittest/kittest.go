@@ -21,17 +21,19 @@ import (
 
 // Model answers with the next content in its script, and counts the calls.
 type Model struct {
-	mu     sync.Mutex
-	script []*genai.Content
-	Calls  int
+	mu       sync.Mutex
+	script   []*genai.Content
+	Calls    int
+	Requests []*model.LLMRequest
 }
 
 func (m *Model) Name() string { return "script" }
 
-func (m *Model) GenerateContent(_ context.Context, _ *model.LLMRequest, _ bool) iter.Seq2[*model.LLMResponse, error] {
+func (m *Model) GenerateContent(_ context.Context, req *model.LLMRequest, _ bool) iter.Seq2[*model.LLMResponse, error] {
 	return func(yield func(*model.LLMResponse, error) bool) {
 		m.mu.Lock()
 		m.Calls++
+		m.Requests = append(m.Requests, req)
 		var c *genai.Content
 		if len(m.script) > 0 {
 			c, m.script = m.script[0], m.script[1:]
@@ -68,13 +70,20 @@ type Harness struct {
 
 // Config is what New needs besides the model and the tools.
 type Config struct {
-	Plugins []*plugin.Plugin
-	After   []llmagent.AfterModelCallback
+	Plugins     []*plugin.Plugin
+	After       []llmagent.AfterModelCallback
+	Before      []llmagent.BeforeModelCallback
+	Toolsets    []tool.Toolset
+	Instruction string
 }
 
 func New(t *testing.T, m *Model, tools []tool.Tool, cfg Config) *Harness {
 	t.Helper()
-	a, err := llmagent.New(llmagent.Config{Name: "test", Model: m, Instruction: "test", Tools: tools, AfterModelCallbacks: cfg.After})
+	if cfg.Instruction == "" {
+		cfg.Instruction = "test"
+	}
+	a, err := llmagent.New(llmagent.Config{Name: "test", Model: m, Instruction: cfg.Instruction, Tools: tools, Toolsets: cfg.Toolsets,
+		AfterModelCallbacks: cfg.After, BeforeModelCallbacks: cfg.Before})
 	if err != nil {
 		t.Fatal(err)
 	}
