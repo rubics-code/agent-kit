@@ -6,6 +6,7 @@ package group
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 
 	"google.golang.org/adk/v2/tool"
@@ -27,6 +28,16 @@ type ConnectContext struct {
 	Holds func(key string) bool
 	Get   func(key string) string
 	Store secrets.Store
+	// HTTPClient is the Kit's client for outside calls. It obeys HTTPS_PROXY.
+	HTTPClient *http.Client
+}
+
+// Client gives the Kit's HTTP client, or the default client in a test.
+func (c ConnectContext) Client() *http.Client {
+	if c.HTTPClient != nil {
+		return c.HTTPClient
+	}
+	return http.DefaultClient
 }
 
 // HoldsAll reports whether the session holds every key.

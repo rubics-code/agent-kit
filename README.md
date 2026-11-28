@@ -133,6 +133,14 @@ The tools are fixed at start. An agent never writes or changes its own tools at 
 
 On a laptop, the terminal chat starts only when stdin is a terminal. A new secret goes to that terminal, never to the model or a client.
 
+### Tool groups in Go
+
+Each group is in `kit/groups`. Add a group to `Config.Groups`. A group is on when the agent holds its keys, or, in Agent Vault mode, when the session has a service for its host. Each group uses the Kit's HTTP client, so `HTTPS_PROXY` works. Each write tool is behind the approval gate, and code writes the approval text.
+
+| Group | Package | Keys | Write tools |
+| --- | --- | --- | --- |
+| Cloudflare DNS | `kit/groups/cloudflare` | `CLOUDFLARE_API_TOKEN` | `cloudflare_create_dns_record` (MX and TXT only) |
+
 ### Auth
 
 On a loopback address, the agent has no auth. It refuses a browser request from another origin (unless the origin is in `Config.Origins`), a request for another host name (DNS rebinding), and a form post.
