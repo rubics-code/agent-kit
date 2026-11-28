@@ -143,6 +143,9 @@ Each group is in `kit/groups`. Add a group to `Config.Groups`. A group is on whe
 | Cloudflare Registrar | `kit/groups/registrar` | `CLOUDFLARE_API_TOKEN` | `cloudflare_register_domain` (the approval holds the live price) |
 | OpenRouter keys | `kit/groups/openrouter` | `OPENROUTER_MANAGEMENT_KEY` | `openrouter_create_key`, `openrouter_update_key` (the limit is at most `maxKeyLimitUsd`) |
 | Infisical | `kit/groups/infisical` | the agent's secret store (`run.Config.Infisical`) | `infisical_create_random_secret` (in the policy's writable paths only) |
+| MXroute | `kit/groups/mxroute` | `MXROUTE_SERVER`, `MXROUTE_USERNAME`, `MXROUTE_API_KEY` | `mxroute_add_domain`, `mxroute_create_mailbox`, `mxroute_reset_mailbox_password`, `mxroute_create_forwarder` |
+
+A tool that makes a password or a key gives it to the secret sink, or to the secret store with `storeAt`. The model never sees the value.
 
 ### Auth
 
