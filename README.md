@@ -141,6 +141,7 @@ Each group is in `kit/groups`. Add a group to `Config.Groups`. A group is on whe
 | --- | --- | --- | --- |
 | Cloudflare DNS | `kit/groups/cloudflare` | `CLOUDFLARE_API_TOKEN` | `cloudflare_create_dns_record` (MX and TXT only) |
 | Cloudflare Registrar | `kit/groups/registrar` | `CLOUDFLARE_API_TOKEN` | `cloudflare_register_domain` (the approval holds the live price) |
+| OpenRouter keys | `kit/groups/openrouter` | `OPENROUTER_MANAGEMENT_KEY` | `openrouter_create_key`, `openrouter_update_key` (the limit is at most `maxKeyLimitUsd`) |
 
 ### Auth
 

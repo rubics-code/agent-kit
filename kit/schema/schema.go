@@ -8,6 +8,8 @@ import (
 	"reflect"
 
 	"github.com/google/jsonschema-go/jsonschema"
+
+	"github.com/rubics-code/agent-kit/kit/secrets"
 )
 
 // Types gives a schema to a named Go type, for example Domain.
@@ -62,4 +64,35 @@ func Enum(values ...string) []any {
 		out[i] = v
 	}
 	return out
+}
+
+// SecretName is a secret name: upper case with underscores.
+type SecretName string
+
+// StoreAt is where a new secret goes in the secret store. The tool checks the
+// path against the policy before the approval.
+type StoreAt struct {
+	Path string     `json:"path" jsonschema:"The Infisical folder, for example /agents/example"`
+	Name SecretName `json:"name"`
+}
+
+// Place gives the store place, or nil when s is nil.
+func (s *StoreAt) Place() *secrets.Place {
+	if s == nil {
+		return nil
+	}
+	return &secrets.Place{Path: s.Path, Name: string(s.Name)}
+}
+
+// StoreAtText is the description of a storeAt argument.
+func StoreAtText(operator string) string {
+	return "Optional. The Infisical folder and name to store the new secret in. Without it, the secret goes to " + operator + "'s terminal."
+}
+
+func init() {
+	base[Of[SecretName]()] = &jsonschema.Schema{
+		Type:        "string",
+		Pattern:     `^[A-Z][A-Z0-9_]{0,127}$`,
+		Description: "Secret name, upper case with underscores, for example API_SERVER_KEY",
+	}
 }
