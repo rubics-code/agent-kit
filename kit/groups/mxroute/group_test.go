@@ -12,9 +12,9 @@ import (
 	"google.golang.org/adk/v2/tool/toolconfirmation"
 	"google.golang.org/genai"
 
+	"github.com/rubics-code/agent-kit/kit/fakes"
 	"github.com/rubics-code/agent-kit/kit/group"
 	"github.com/rubics-code/agent-kit/kit/groups/infisical"
-	"github.com/rubics-code/agent-kit/kit/internal/fakeinfisical"
 	"github.com/rubics-code/agent-kit/kit/internal/kittest"
 	"github.com/rubics-code/agent-kit/kit/policy"
 	"github.com/rubics-code/agent-kit/kit/secrets"
@@ -45,10 +45,18 @@ func (s *sink) Deliver(_ context.Context, _, value string) error {
 	return nil
 }
 
-func setup(t *testing.T, f *fakeMX, s secrets.Sink, inf *fakeinfisical.Server, script ...*genai.Content) *kittest.Harness {
+func newFake(t *testing.T) *fakes.MXroute {
+	return fakes.NewMXroute(t, map[string][]string{"example.com": {"ada", "lin"}})
+}
+
+func client(f *fakes.MXroute) *Client {
+	return &Client{Server: "mail.example.net", Username: "account", APIKey: fakes.MXrouteKey, BaseURL: f.URL, HTTP: f.Client()}
+}
+
+func setup(t *testing.T, f *fakes.MXroute, s secrets.Sink, inf *fakes.Infisical, script ...*genai.Content) *kittest.Harness {
 	t.Helper()
 	pol := testPolicy(t)
-	services := group.Services{"mxroute": f.client()}
+	services := group.Services{"mxroute": client(f)}
 	if inf != nil {
 		services[group.StoreGroupID] = inf.Client(pol.Infisical.EnvLabel)
 	}
@@ -77,8 +85,8 @@ func TestStopsBeforeAWriteAndShowsASummaryMadeByCode(t *testing.T) {
 	h := setup(t, f, &sink{}, nil, kittest.Call(createHello), kittest.Text("done"))
 	cs := kittest.Confirmations(h.Say("make hello@"))
 	p := kittest.Payload(t, cs[0])
-	if p["tool"] != "mxroute_create_mailbox" || p["summary"] != "Create the mailbox hello@example.com (quota 1024 MB, send limit 9600 per day)" || len(f.ops()) != 0 {
-		t.Fatalf("%v %v", p, f.ops())
+	if p["tool"] != "mxroute_create_mailbox" || p["summary"] != "Create the mailbox hello@example.com (quota 1024 MB, send limit 9600 per day)" || len(f.Ops()) != 0 {
+		t.Fatalf("%v %v", p, f.Ops())
 	}
 }
 
@@ -87,11 +95,11 @@ func TestWritesOnceAfterApprovalAndThePasswordNeverEntersTheConversation(t *test
 	h := setup(t, f, s, nil, kittest.Call(createHello), kittest.Text("done"))
 	cs := kittest.Confirmations(h.Say("make hello@"))
 	all := kittest.AllText(h.Approve(cs[0]))
-	want := []map[string]any{{"op": "createEmailAccount", "domain": "example.com", "username": "hello", "quota": float64(1024), "limit": float64(9600)}}
-	if !reflect.DeepEqual(f.writes, want) {
-		t.Fatalf("%v", f.writes)
+	want := []fakes.Write{{Op: "createEmailAccount", Args: map[string]any{"domain": "example.com", "username": "hello", "quota": float64(1024), "limit": float64(9600)}}}
+	if !reflect.DeepEqual(f.Writes(), want) {
+		t.Fatalf("%v", f.Writes())
 	}
-	pw := f.password("hello@example.com")
+	pw := f.Password("hello@example.com")
 	if len(s.delivered) != 1 || s.delivered[0] != pw || len(pw) != 24 || strings.Contains(all, pw) {
 		t.Fatalf("%d delivered", len(s.delivered))
 	}
@@ -105,7 +113,7 @@ func TestDoesNotWriteWhenTheOperatorRejects(t *testing.T) {
 	h := setup(t, f, s, nil, kittest.Call(createHello), kittest.Text("ok"))
 	cs := kittest.Confirmations(h.Say("make hello@"))
 	all := kittest.AllText(h.Reject(cs[0], "not now"))
-	if len(f.ops()) != 0 || len(s.delivered) != 0 || !strings.Contains(all, "Not done: Sam did not approve (not now). Do not try again unless Sam asks.") {
+	if len(f.Ops()) != 0 || len(s.delivered) != 0 || !strings.Contains(all, "Not done: Sam did not approve (not now). Do not try again unless Sam asks.") {
 		t.Fatal(all)
 	}
 }
@@ -123,8 +131,8 @@ func TestDoesNotWriteWhenTheApprovalIsForOtherArguments(t *testing.T) {
 	h := setup(t, f, &sink{}, nil, kittest.Call(createHello), kittest.Text("ok"))
 	cs := kittest.Confirmations(h.Say("make hello@"))
 	h.Send(kittest.Answer(true, map[string]map[string]any{cs[0].ID: {"argsHash": "sha256:" + strings.Repeat("0", 64)}}))
-	if len(f.ops()) != 0 {
-		t.Fatal(f.ops())
+	if len(f.Ops()) != 0 {
+		t.Fatal(f.Ops())
 	}
 }
 
@@ -143,7 +151,7 @@ func TestAsksForEachWriteWhenTheModelCallsTwoAtOnce(t *testing.T) {
 			Response: map[string]any{"confirmed": p["tool"] == "mxroute_create_forwarder", "payload": map[string]any{"argsHash": p["argsHash"]}}}})
 	}
 	h.Send(answer)
-	if got := f.ops(); !reflect.DeepEqual(got, []string{"createForwarder"}) {
+	if got := f.Ops(); !reflect.DeepEqual(got, []string{"createForwarder"}) {
 		t.Fatal(got)
 	}
 }
@@ -157,7 +165,7 @@ func TestRefusesArgumentsOutsideTheSchemaBeforeAnyApproval(t *testing.T) {
 	} {
 		h := setup(t, f, &sink{}, nil, kittest.Call(kittest.Fn("bad", "mxroute_create_mailbox", args)), kittest.Text("sorry"))
 		evs := h.Say("x")
-		if len(kittest.Confirmations(evs)) != 0 || len(f.ops()) != 0 {
+		if len(kittest.Confirmations(evs)) != 0 || len(f.Ops()) != 0 {
 			t.Fatalf("%v: %s", args, kittest.AllText(evs))
 		}
 	}
@@ -181,14 +189,14 @@ func TestAddsADomainAfterApproval(t *testing.T) {
 		t.Fatal(s)
 	}
 	all := kittest.AllText(h.Approve(cs[0]))
-	if !reflect.DeepEqual(f.ops(), []string{"addDomain"}) || !strings.Contains(all, "Next, get its DNS records") {
+	if !reflect.DeepEqual(f.Ops(), []string{"addDomain"}) || !strings.Contains(all, "Next, get its DNS records") {
 		t.Fatal(all)
 	}
 }
 
 func TestResetsAPasswordAfterApprovalAndStoresItInInfisical(t *testing.T) {
 	f, s := newFake(t), &sink{}
-	inf := fakeinfisical.New(t, map[string]map[string]string{"/agents/example": {}})
+	inf := fakes.NewInfisical(t, map[string]map[string]string{"/agents/example": {}})
 	h := setup(t, f, s, inf, kittest.Call(kittest.Fn("p", "mxroute_reset_mailbox_password", map[string]any{"domain": "example.com", "username": "ada",
 		"storeAt": map[string]any{"path": "/agents/example", "name": "MAIL_PASSWORD"}})), kittest.Text("ok"))
 	cs := kittest.Confirmations(h.Say("reset ada"))
@@ -198,7 +206,7 @@ func TestResetsAPasswordAfterApprovalAndStoresItInInfisical(t *testing.T) {
 	}
 	all := kittest.AllText(h.Approve(cs[0]))
 	stored, _ := inf.Value("/agents/example", "MAIL_PASSWORD")
-	if stored == "" || stored != f.password("ada@example.com") || len(s.delivered) != 0 || strings.Contains(all, stored) {
+	if stored == "" || stored != f.Password("ada@example.com") || len(s.delivered) != 0 || strings.Contains(all, stored) {
 		t.Fatalf("%q", stored)
 	}
 }
@@ -208,7 +216,7 @@ func TestRefusesStoreAtWhenInfisicalIsNotSetUpBeforeAnyApproval(t *testing.T) {
 	h := setup(t, f, &sink{}, nil, kittest.Call(kittest.Fn("p", "mxroute_reset_mailbox_password", map[string]any{"domain": "example.com", "username": "ada",
 		"storeAt": map[string]any{"path": "/agents/example", "name": "MAIL_PASSWORD"}})), kittest.Text("ok"))
 	evs := h.Say("reset ada")
-	if len(kittest.Confirmations(evs)) != 0 || len(f.ops()) != 0 || !strings.Contains(kittest.AllText(evs), "Infisical is not set up") {
+	if len(kittest.Confirmations(evs)) != 0 || len(f.Ops()) != 0 || !strings.Contains(kittest.AllText(evs), "Infisical is not set up") {
 		t.Fatal(kittest.AllText(evs))
 	}
 }
@@ -217,7 +225,7 @@ func TestRefusesAMailboxWithNoPlaceForThePasswordBeforeAnyApproval(t *testing.T)
 	f := newFake(t)
 	h := setup(t, f, secrets.None, nil, kittest.Call(createHello), kittest.Text("ok"))
 	evs := h.Say("make hello@")
-	if len(kittest.Confirmations(evs)) != 0 || len(f.ops()) != 0 || !strings.Contains(kittest.AllText(evs), "Call again with storeAt") {
+	if len(kittest.Confirmations(evs)) != 0 || len(f.Ops()) != 0 || !strings.Contains(kittest.AllText(evs), "Call again with storeAt") {
 		t.Fatal(kittest.AllText(evs))
 	}
 }
@@ -226,7 +234,7 @@ func TestRefusesAForwarderToAValueThatIsNotAnAddress(t *testing.T) {
 	f := newFake(t)
 	h := setup(t, f, &sink{}, nil, kittest.Call(kittest.Fn("c", "mxroute_create_forwarder", map[string]any{"domain": "example.com", "alias": "sales", "destinations": []any{"Sam <sam@example.org>"}})), kittest.Text("ok"))
 	evs := h.Say("x")
-	if len(kittest.Confirmations(evs)) != 0 || len(f.ops()) != 0 {
+	if len(kittest.Confirmations(evs)) != 0 || len(f.Ops()) != 0 {
 		t.Fatal(kittest.AllText(evs))
 	}
 }

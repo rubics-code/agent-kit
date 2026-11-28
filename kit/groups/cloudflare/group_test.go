@@ -9,6 +9,7 @@ import (
 
 	"google.golang.org/genai"
 
+	"github.com/rubics-code/agent-kit/kit/fakes"
 	"github.com/rubics-code/agent-kit/kit/group"
 	"github.com/rubics-code/agent-kit/kit/internal/kittest"
 	"github.com/rubics-code/agent-kit/kit/policy"
@@ -19,8 +20,12 @@ var testPolicy = policy.Policy{Agent: "Example", Operator: "Sam", MaxKeyLimitUSD
 
 func prio(n int) *int { return &n }
 
-func seeded(t *testing.T) *fakeDNS {
-	return newFakeDNS(t, map[string][]Record{
+func client(f *fakes.Cloudflare) *DNS {
+	return &DNS{API: API{Token: fakes.CloudflareToken, BaseURL: f.URL, HTTP: f.Client()}}
+}
+
+func seeded(t *testing.T) *fakes.Cloudflare {
+	return fakes.NewCloudflare(t, map[string][]fakes.Record{
 		"example.org": {
 			{Type: "A", Name: "example.org", Content: "192.0.2.1"},
 			{Type: "CNAME", Name: "www.example.org", Content: "example.org"},
@@ -29,9 +34,9 @@ func seeded(t *testing.T) *fakeDNS {
 	})
 }
 
-func setup(t *testing.T, f *fakeDNS, script ...*genai.Content) *kittest.Harness {
+func setup(t *testing.T, f *fakes.Cloudflare, script ...*genai.Content) *kittest.Harness {
 	t.Helper()
-	asm, err := group.Assemble([]group.Group{Group}, group.Services{"cloudflare": f.client()}, secrets.None, testPolicy,
+	asm, err := group.Assemble([]group.Group{Group}, group.Services{"cloudflare": client(f)}, secrets.None, testPolicy,
 		group.Enable{Has: func(string) bool { return true }})
 	if err != nil {
 		t.Fatal(err)
@@ -76,8 +81,8 @@ func TestStopsBeforeAWriteAndShowsTheRecordAndWhatIsAtThatNameNow(t *testing.T) 
 		t.Fatalf("%d confirmations", len(cs))
 	}
 	want := "Create in Cloudflare (zone example.org): TXT _da-verify-abc.example.org domain-verified. Records at that name now: none"
-	if got := kittest.Summary(t, cs[0]); got != want || f.writeCount() != 0 {
-		t.Fatalf("%q, %d writes", got, f.writeCount())
+	if got := kittest.Summary(t, cs[0]); got != want || len(f.Writes()) != 0 {
+		t.Fatalf("%q, %d writes", got, len(f.Writes()))
 	}
 }
 
@@ -90,10 +95,10 @@ func TestWritesOnceAfterApprovalWithTheAgentsComment(t *testing.T) {
 		t.Fatal(s)
 	}
 	evs := h.Approve(cs[0])
-	want := []map[string]any{{"zoneId": "zone-example.org", "type": "MX", "name": "example.org", "content": "mail.example.net",
-		"priority": float64(10), "comment": "Created by Example, approved by Sam", "ttl": float64(1)}}
-	if !reflect.DeepEqual(f.writes, want) {
-		t.Fatalf("%v", f.writes)
+	want := []fakes.Write{{Op: "createRecord", Args: map[string]any{"zoneId": "zone-example.org", "type": "MX", "name": "example.org", "content": "mail.example.net",
+		"priority": float64(10), "comment": "Created by Example, approved by Sam", "ttl": float64(1)}}}
+	if !reflect.DeepEqual(f.Writes(), want) {
+		t.Fatalf("%v", f.Writes())
 	}
 	if r := kittest.Responses(evs)["cloudflare_create_dns_record"]; r[len(r)-1]["result"] != "Created MX example.org 10 mail.example.net." {
 		t.Fatalf("%v", r)
@@ -105,17 +110,17 @@ func TestDoesNotWriteWhenTheOperatorRejects(t *testing.T) {
 	h := setup(t, f, create(verification), kittest.Text("ok"))
 	cs := kittest.Confirmations(h.Say("add it"))
 	evs := h.Reject(cs[0], "no")
-	if f.writeCount() != 0 || !strings.Contains(kittest.AllText(evs), "Not done: Sam did not approve (no)") {
-		t.Fatalf("%d writes", f.writeCount())
+	if len(f.Writes()) != 0 || !strings.Contains(kittest.AllText(evs), "Not done: Sam did not approve (no)") {
+		t.Fatalf("%d writes", len(f.Writes()))
 	}
 }
 
-func noApproval(t *testing.T, f *fakeDNS, args map[string]any, want string) {
+func noApproval(t *testing.T, f *fakes.Cloudflare, args map[string]any, want string) {
 	t.Helper()
 	h := setup(t, f, create(args), kittest.Text("ok"))
 	evs := h.Say("add it")
 	all := kittest.AllText(evs)
-	if len(kittest.Confirmations(evs)) != 0 || f.writeCount() != 0 || !strings.Contains(all, want) {
+	if len(kittest.Confirmations(evs)) != 0 || len(f.Writes()) != 0 || !strings.Contains(all, want) {
 		t.Fatalf("want %q in %s", want, all)
 	}
 }
@@ -156,7 +161,7 @@ func TestUsesTheKitsHTTPClient(t *testing.T) {
 		return f.Client().Transport.RoundTrip(r)
 	})}
 	s := group.Connect([]group.Group{Group}, group.ConnectContext{
-		Holds: func(k string) bool { return k == TokenKey }, Get: func(string) string { return testToken }, HTTPClient: hc,
+		Holds: func(k string) bool { return k == TokenKey }, Get: func(string) string { return fakes.CloudflareToken }, HTTPClient: hc,
 	})
 	dns := s["cloudflare"].(*DNS)
 	dns.API.BaseURL = f.URL

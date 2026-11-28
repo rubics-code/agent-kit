@@ -7,8 +7,8 @@ import (
 
 	"google.golang.org/genai"
 
+	"github.com/rubics-code/agent-kit/kit/fakes"
 	"github.com/rubics-code/agent-kit/kit/group"
-	"github.com/rubics-code/agent-kit/kit/internal/fakeinfisical"
 	"github.com/rubics-code/agent-kit/kit/internal/kittest"
 	"github.com/rubics-code/agent-kit/kit/policy"
 	"github.com/rubics-code/agent-kit/kit/secrets"
@@ -27,15 +27,15 @@ func testPolicy(t *testing.T) policy.Policy {
 
 var secretValues = []string{"example-api-secret", "sk-example-secret", "ops-admin-secret"}
 
-func seeded(t *testing.T) *fakeinfisical.Server {
-	return fakeinfisical.New(t, map[string]map[string]string{
+func seeded(t *testing.T) *fakes.Infisical {
+	return fakes.NewInfisical(t, map[string]map[string]string{
 		"/example":        {"OWN_KEY": "own-secret"},
 		"/agents/example": {"API_SERVER_KEY": "example-api-secret", "OPENROUTER_API_KEY": "sk-example-secret"},
 		"/ops":            {"ADMIN_PASSWORD": "ops-admin-secret"},
 	})
 }
 
-func setup(t *testing.T, f *fakeinfisical.Server, script ...*genai.Content) *kittest.Harness {
+func setup(t *testing.T, f *fakes.Infisical, script ...*genai.Content) *kittest.Harness {
 	t.Helper()
 	pol := testPolicy(t)
 	store := f.Client(pol.Infisical.EnvLabel)
@@ -96,7 +96,7 @@ func TestMakesARandomSecretAfterApprovalAndTheValueNeverEntersTheConversation(t 
 	if !ok || !regexp.MustCompile(`^[0-9a-f]{64}$`).MatchString(value) || strings.Contains(all, value) {
 		t.Fatalf("%q %v", value, ok)
 	}
-	if ws := f.Writes(); len(ws) != 2 || ws[0] != (fakeinfisical.Write{Method: "POST", Path: "/agents/new-agent", Env: "staging"}) {
+	if ws := f.Writes(); len(ws) != 2 || ws[0] != (fakes.InfisicalWrite{Method: "POST", Path: "/agents/new-agent", Env: "staging"}) {
 		t.Fatalf("%v", ws)
 	}
 }

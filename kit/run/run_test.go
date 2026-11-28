@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -404,5 +405,31 @@ func TestExitStopsTheAgent(t *testing.T) {
 		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("exit did not stop the agent")
+	}
+}
+
+func TestServesTheConsoleFromAFolder(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "index.html"), []byte("<title>built console</title>"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	a, _ := build(t, config(t, &notebook{}), credentials.Environ{"EXAMPLE_CONSOLE_DIR": dir})
+	if w := do(a.Handler, "GET", "/", nil, nil); !strings.Contains(w.Body.String(), "built console") {
+		t.Fatal(w.Body.String())
+	}
+	cfg := config(t, &notebook{})
+	cfg.ConsoleDir = t.TempDir()
+	if _, err := Build(t.Context(), cfg, credentials.Environ{}, io.Discard); err == nil || !strings.Contains(err.Error(), "no index.html") {
+		t.Fatal(err)
+	}
+}
+
+func TestAnEvalCanGiveTheStoreAndTheSink(t *testing.T) {
+	cfg := config(t, &notebook{})
+	store := secrets.NewMemoryStore("/example")
+	cfg.Store, cfg.Secrets = store, secrets.None
+	a, _ := build(t, cfg, credentials.Environ{})
+	if a.Kit.Store != store || a.Kit.Secrets != secrets.None {
+		t.Fatalf("%T %T", a.Kit.Store, a.Kit.Secrets)
 	}
 }

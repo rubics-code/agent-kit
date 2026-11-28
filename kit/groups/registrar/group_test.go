@@ -6,11 +6,11 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"strings"
-	"sync"
 	"testing"
 
 	"google.golang.org/genai"
 
+	"github.com/rubics-code/agent-kit/kit/fakes"
 	"github.com/rubics-code/agent-kit/kit/group"
 	"github.com/rubics-code/agent-kit/kit/groups/cloudflare"
 	"github.com/rubics-code/agent-kit/kit/internal/kittest"
@@ -20,99 +20,24 @@ import (
 
 var testPolicy = policy.Policy{Agent: "Example", Operator: "Sam", MaxKeyLimitUSD: 100}
 
-func price(c string) *Pricing { return &Pricing{Currency: "USD", RegistrationCost: c, RenewalCost: c} }
-
-// fakeRegistrar is the Registrar API in memory, for one account. It records
-// every write.
-type fakeRegistrar struct {
-	*httptest.Server
-	mu     sync.Mutex
-	offers map[string]Offer
-	// The states that a registration and then each status call give, in order.
-	states []Status
-	writes []map[string]any
-}
-
-func newFake(t *testing.T) *fakeRegistrar {
-	f := &fakeRegistrar{
-		offers: map[string]Offer{
-			"exampledemo.com": {Name: "exampledemo.com", Registrable: true, Tier: "standard", Pricing: price("10.44")},
-			"example.ai":      {Name: "example.ai", Registrable: false, Tier: "premium", Reason: "domain_premium"},
-		},
-		states: []Status{{State: "succeeded", Completed: true}},
-	}
-	f.Server = httptest.NewServer(http.HandlerFunc(f.serve))
-	t.Cleanup(f.Close)
+func newFake(t *testing.T) *fakes.Cloudflare {
+	f := fakes.NewCloudflare(t, nil)
+	f.SetOffer(fakes.Price("exampledemo.com", "10.44"))
+	f.SetOffer(fakes.Offer{Name: "example.ai", Tier: "premium", Reason: "domain_premium"})
 	return f
 }
 
-func (f *fakeRegistrar) client() *Client {
-	return &Client{API: cloudflare.API{Token: "test-token", BaseURL: f.URL, HTTP: f.Client()}}
-}
-
-func (f *fakeRegistrar) next() Status {
-	s := f.states[0]
-	if len(f.states) > 1 {
-		f.states = f.states[1:]
-	}
-	return s
+func client(f *fakes.Cloudflare) *Client {
+	return &Client{API: cloudflare.API{Token: fakes.CloudflareToken, BaseURL: f.URL, HTTP: f.Client()}}
 }
 
 func ok(w http.ResponseWriter, v any) {
 	_ = json.NewEncoder(w).Encode(map[string]any{"success": true, "result": v})
 }
 
-func (f *fakeRegistrar) serve(w http.ResponseWriter, r *http.Request) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	const pre = "/accounts/acc1/registrar/"
-	p := r.URL.Path
-	switch {
-	case p == "/accounts":
-		ok(w, []any{map[string]any{"id": "acc1"}})
-	case p == pre+"domain-search":
-		out := []Offer{}
-		for _, o := range f.offers {
-			if strings.Contains(o.Name, strings.ToLower(r.URL.Query().Get("q"))) {
-				out = append(out, o)
-			}
-		}
-		ok(w, map[string]any{"domains": out})
-	case p == pre+"domain-check":
-		var body struct{ Domains []string }
-		_ = json.NewDecoder(r.Body).Decode(&body)
-		out := []Offer{}
-		for _, d := range body.Domains {
-			o, found := f.offers[d]
-			if !found {
-				o = Offer{Name: d, Reason: "domain_unavailable"}
-			}
-			out = append(out, o)
-		}
-		ok(w, map[string]any{"domains": out})
-	case p == pre+"registrations" && r.Method == http.MethodPost:
-		var body map[string]any
-		_ = json.NewDecoder(r.Body).Decode(&body)
-		f.writes = append(f.writes, body)
-		w.WriteHeader(http.StatusAccepted)
-		ok(w, f.next())
-	case strings.HasPrefix(p, pre+"registrations/") && strings.HasSuffix(p, "/registration-status"):
-		ok(w, f.next())
-	default:
-		w.WriteHeader(404)
-		_ = json.NewEncoder(w).Encode(map[string]any{"success": false, "errors": []any{map[string]any{"code": 7000, "message": "No route"}}})
-	}
-}
-
-func (f *fakeRegistrar) writeCount() int {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	return len(f.writes)
-}
-
-func setup(t *testing.T, f *fakeRegistrar, script ...*genai.Content) *kittest.Harness {
+func setup(t *testing.T, f *fakes.Cloudflare, script ...*genai.Content) *kittest.Harness {
 	t.Helper()
-	asm, err := group.Assemble([]group.Group{Group}, group.Services{"registrar": f.client()}, secrets.None, testPolicy,
+	asm, err := group.Assemble([]group.Group{Group}, group.Services{"registrar": client(f)}, secrets.None, testPolicy,
 		group.Enable{Has: func(string) bool { return true }})
 	if err != nil {
 		t.Fatal(err)
@@ -124,7 +49,7 @@ func register(d string) *genai.Content {
 	return kittest.Call(kittest.Fn("r1", "cloudflare_register_domain", map[string]any{"domain": d}))
 }
 
-func approveAndRun(t *testing.T, f *fakeRegistrar) string {
+func approveAndRun(t *testing.T, f *fakes.Cloudflare) string {
 	t.Helper()
 	h := setup(t, f, register("exampledemo.com"), kittest.Text("done"))
 	cs := kittest.Confirmations(h.Say("buy it"))
@@ -148,17 +73,17 @@ func TestStopsBeforeARegistrationAndShowsTheLivePrice(t *testing.T) {
 	f := newFake(t)
 	h := setup(t, f, register("exampledemo.com"), kittest.Text("ok"))
 	cs := kittest.Confirmations(h.Say("buy"))
-	if len(cs) != 1 || !strings.Contains(kittest.Summary(t, cs[0]), "10.44 USD now, renewal 10.44 USD") || f.writeCount() != 0 {
-		t.Fatalf("%v, %d writes", cs, f.writeCount())
+	if len(cs) != 1 || !strings.Contains(kittest.Summary(t, cs[0]), "10.44 USD now, renewal 10.44 USD") || len(f.Writes()) != 0 {
+		t.Fatalf("%v, %d writes", cs, len(f.Writes()))
 	}
 }
 
 func TestRegistersOnceAfterApproval(t *testing.T) {
 	f := newFake(t)
 	out := approveAndRun(t, f)
-	want := []map[string]any{{"domain_name": "exampledemo.com", "years": float64(1), "auto_renew": false, "privacy_mode": "redaction"}}
-	if !reflect.DeepEqual(f.writes, want) || !strings.Contains(out, "Registered exampledemo.com") {
-		t.Fatalf("%v\n%s", f.writes, out)
+	want := []fakes.Write{{Op: "register", Args: map[string]any{"domain_name": "exampledemo.com", "years": float64(1), "auto_renew": false, "privacy_mode": "redaction"}}}
+	if !reflect.DeepEqual(f.Writes(), want) || !strings.Contains(out, "Registered exampledemo.com") {
+		t.Fatalf("%v\n%s", f.Writes(), out)
 	}
 }
 
@@ -166,12 +91,10 @@ func TestDoesNotRegisterWhenThePriceChangesAfterApproval(t *testing.T) {
 	f := newFake(t)
 	h := setup(t, f, register("exampledemo.com"), kittest.Text("ok"))
 	cs := kittest.Confirmations(h.Say("buy"))
-	f.mu.Lock()
-	f.offers["exampledemo.com"] = Offer{Name: "exampledemo.com", Registrable: true, Tier: "standard", Pricing: price("99.00")}
-	f.mu.Unlock()
+	f.SetOffer(fakes.Price("exampledemo.com", "99.00"))
 	out := kittest.AllText(h.Approve(cs[0]))
-	if f.writeCount() != 0 || !strings.Contains(out, "does not match these arguments") {
-		t.Fatalf("%d writes\n%s", f.writeCount(), out)
+	if len(f.Writes()) != 0 || !strings.Contains(out, "does not match these arguments") {
+		t.Fatalf("%d writes\n%s", len(f.Writes()), out)
 	}
 }
 
@@ -180,8 +103,8 @@ func TestDoesNotRegisterWhenTheOperatorRejects(t *testing.T) {
 	h := setup(t, f, register("exampledemo.com"), kittest.Text("ok"))
 	cs := kittest.Confirmations(h.Say("buy"))
 	h.Reject(cs[0], "no")
-	if f.writeCount() != 0 {
-		t.Fatal(f.writes)
+	if len(f.Writes()) != 0 {
+		t.Fatal(f.Writes())
 	}
 }
 
@@ -190,7 +113,7 @@ func TestSendsPremiumAndDashboardOnlyDomainsToTheDashboardWithNoApproval(t *test
 		f := newFake(t)
 		h := setup(t, f, register(d), kittest.Text("ok"))
 		evs := h.Say("buy")
-		if len(kittest.Confirmations(evs)) != 0 || !strings.Contains(kittest.AllText(evs), "Cloudflare dashboard") || f.writeCount() != 0 {
+		if len(kittest.Confirmations(evs)) != 0 || !strings.Contains(kittest.AllText(evs), "Cloudflare dashboard") || len(f.Writes()) != 0 {
 			t.Fatalf("%s: %s", d, kittest.AllText(evs))
 		}
 	}
@@ -198,9 +121,8 @@ func TestSendsPremiumAndDashboardOnlyDomainsToTheDashboardWithNoApproval(t *test
 
 func TestPollsAPendingRegistrationUntilItFinishes(t *testing.T) {
 	f := newFake(t)
-	var done Status
-	_ = json.Unmarshal([]byte(`{"state":"succeeded","completed":true,"context":{"registration":{"expires_at":"2027-11-27"}}}`), &done)
-	f.states = []Status{{State: "pending"}, {State: "in_progress"}, done}
+	f.SetStates(map[string]any{"state": "pending"}, map[string]any{"state": "in_progress"},
+		map[string]any{"state": "succeeded", "completed": true, "context": map[string]any{"registration": map[string]any{"expires_at": "2027-11-27"}}})
 	if out := approveAndRun(t, f); !strings.Contains(out, "expires 2027-11-27") {
 		t.Fatal(out)
 	}
@@ -208,9 +130,7 @@ func TestPollsAPendingRegistrationUntilItFinishes(t *testing.T) {
 
 func TestReportsActionRequiredAndSaysNotToRegisterAgain(t *testing.T) {
 	f := newFake(t)
-	var s Status
-	_ = json.Unmarshal([]byte(`{"state":"action_required","completed":false,"context":{"action":"registrant_email_confirmation_pending"}}`), &s)
-	f.states = []Status{s}
+	f.SetStates(map[string]any{"state": "action_required", "context": map[string]any{"action": "registrant_email_confirmation_pending"}})
 	out := approveAndRun(t, f)
 	if !strings.Contains(out, "registrant_email_confirmation_pending") || !strings.Contains(out, "Do not register again") {
 		t.Fatal(out)
