@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { AgentCard } from "../lib/a2a";
-import { KIT_CATALOG } from "../a2ui/kit";
+import { KIT_CATALOG } from "../lib/catalogIds";
 import { check, normalizeAddress, testCall, TEST_PROMPT, toAgent } from "../lib/connect";
 import { agentColor, initial } from "../lib/look";
 import type { Agent } from "../lib/storage";

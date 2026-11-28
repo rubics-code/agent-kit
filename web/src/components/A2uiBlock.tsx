@@ -1,32 +1,13 @@
-import { useEffect, useRef, useState } from "react";
-import { A2uiSurface } from "@a2ui/react";
-import { MessageProcessor, type ActionPayload, type SurfaceModel } from "@a2ui/web_core";
-import { catalogs } from "../lib/catalogs";
+import { lazy, Suspense } from "react";
+import type { ActionPayload } from "@a2ui/web_core";
 
-// A2uiBlock renders one A2UI surface from its messages.
-export function A2uiBlock({ messages, onAction }: { messages: unknown[]; onAction?: (a: ActionPayload) => void }) {
-  const act = useRef(onAction);
-  act.current = onAction;
-  const [surface, setSurface] = useState<SurfaceModel<never> | undefined>();
-  const [error, setError] = useState<string>();
+// The A2UI renderer is most of the bundle, so it loads when the first card shows.
+const View = lazy(() => import("./A2uiSurfaceView"));
 
-  useEffect(() => {
-    const p = new MessageProcessor(catalogs as never, (a: ActionPayload) => act.current?.(a));
-    try {
-      p.processMessages(messages as never);
-      setSurface([...p.model.surfacesMap.values()][0] as SurfaceModel<never> | undefined);
-      setError(undefined);
-    } catch (e) {
-      setError(String(e));
-    }
-    return () => p.model.dispose?.();
-  }, [messages]);
-
-  if (error) return <div className="error-line">The card could not be drawn: {error}</div>;
-  if (!surface) return null;
+export function A2uiBlock(props: { messages: unknown[]; onAction?: (a: ActionPayload) => void }) {
   return (
-    <div className="a2ui-host">
-      <A2uiSurface surface={surface} />
-    </div>
+    <Suspense fallback={<div className="meta">Loading the card…</div>}>
+      <View {...props} />
+    </Suspense>
   );
 }

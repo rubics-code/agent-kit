@@ -1,5 +1,5 @@
 import { A2AClient, endpointFor, fetchCard, newId, rendersA2UI, userMessage, type AgentCard, type StreamEvent } from "./a2a";
-import { catalogIds } from "./catalogs";
+import { catalogIds } from "./catalogIds";
 import { agentId, type Agent } from "./storage";
 
 export const TEST_PROMPT = "Say hello in one line.";
