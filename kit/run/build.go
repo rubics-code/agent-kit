@@ -269,7 +269,11 @@ func (a *Agent) build(ctx context.Context, creds credentials.Credentials, vaultH
 		stt = transcribe.OpenRouter{APIKey: key, BaseURL: cfg.BaseURL, Model: cfg.TranscribeModel, Client: client}
 	}
 
-	toolsets, err := tokens.OnDemand(tools, cfg.CoreTools, cfg.ToolSearch)
+	core, err := coreTools(cfg.CoreTools, tools, a.Statuses)
+	if err != nil {
+		return err
+	}
+	toolsets, err := tokens.OnDemand(tools, core, cfg.ToolSearch)
 	if err != nil {
 		return err
 	}
@@ -379,3 +383,28 @@ func (a *Agent) build(ctx context.Context, creds credentials.Credentials, vaultH
 
 // env is set by Run before Build; tests give it in Build's environment.
 func (a *Agent) env() credentials.Environ { return a.cfg.environ }
+
+// coreTools keeps the core tools that the agent has now. A core tool of a
+// group that is off is left out, so a missing key does not stop the agent. A
+// name that is no tool of any group is an error, so a typo shows.
+func coreTools(core []string, tools []tool.Tool, statuses []group.Status) ([]string, error) {
+	have, known := map[string]bool{}, map[string]bool{}
+	for _, t := range tools {
+		have[t.Name()], known[t.Name()] = true, true
+	}
+	for _, st := range statuses {
+		for _, m := range st.Catalog {
+			known[m.Name] = true
+		}
+	}
+	var out []string
+	for _, n := range core {
+		if !known[n] {
+			return nil, fmt.Errorf("the core tool %s is not a tool of the agent", n)
+		}
+		if have[n] {
+			out = append(out, n)
+		}
+	}
+	return out, nil
+}

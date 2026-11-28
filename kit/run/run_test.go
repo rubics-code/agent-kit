@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -20,6 +21,7 @@ import (
 
 	"google.golang.org/adk/v2/agent"
 	"google.golang.org/adk/v2/tool"
+	"google.golang.org/adk/v2/tool/functiontool"
 
 	"github.com/rubics-code/agent-kit/kit/approval"
 	"github.com/rubics-code/agent-kit/kit/credentials"
@@ -431,5 +433,25 @@ func TestAnEvalCanGiveTheStoreAndTheSink(t *testing.T) {
 	a, _ := build(t, cfg, credentials.Environ{})
 	if a.Kit.Store != store || a.Kit.Secrets != secrets.None {
 		t.Fatalf("%T %T", a.Kit.Store, a.Kit.Secrets)
+	}
+}
+
+func TestLeavesOutTheCoreToolsOfAGroupThatIsOffButRefusesAnUnknownName(t *testing.T) {
+	mail := group.New(group.Def[string]{ID: "mail", Name: "Mail", Keys: []string{"MAIL_KEY"},
+		Connect: func(c group.ConnectContext) (string, bool) { return "", c.Holds("MAIL_KEY") },
+		Tools: func(string, group.Shared) ([]tool.Tool, error) {
+			tl, err := functiontool.New(functiontool.Config{Name: "mail_list", Description: "List."},
+				func(agent.Context, struct{}) (map[string]any, error) { return nil, nil })
+			return []tool.Tool{tl}, err
+		}})
+	cfg := config(t, &notebook{})
+	cfg.Groups, cfg.ToolSearch, cfg.CoreTools = []group.Group{mail}, true, []string{"mail_list", "write_note"}
+	a, _ := build(t, cfg, credentials.Environ{})
+	if slices.Contains(a.Tools, "mail_list") {
+		t.Fatal(a.Tools)
+	}
+	cfg.CoreTools = []string{"mail_lsit"}
+	if _, err := Build(t.Context(), cfg, credentials.Environ{}, io.Discard); err == nil || !strings.Contains(err.Error(), "mail_lsit") {
+		t.Fatal(err)
 	}
 }
