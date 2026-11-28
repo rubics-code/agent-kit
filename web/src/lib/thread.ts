@@ -110,7 +110,8 @@ function applyParts(t: Thread, parts: Part[], now: number): Thread {
         const tool = items[i] as Extract<Item, { kind: "tool" }>;
         const st = String(c.response?.status ?? "");
         const err = c.response?.error ? String(c.response.error) : "";
-        const state = err.includes("rejected") ? "rejected" : err ? "failed" : st.startsWith("waiting") ? "waiting" : "done";
+        const notDone = String(c.response?.result ?? "").startsWith("Not done:");
+        const state = err.includes("rejected") || notDone ? "rejected" : err ? "failed" : st.startsWith("waiting") ? "waiting" : "done";
         items[i] = { ...tool, state, ms: now - tool.at };
       }
       const card = c.response?.card as { title?: string; a2ui?: unknown[] } | undefined;
