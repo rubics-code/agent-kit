@@ -94,6 +94,56 @@ The Kit is moving to Go, on Google ADK Go v2. The Go code is in this repo, next 
 
 The console holds no key. It talks to an agent only over A2A and the Kit endpoints, and the agent keeps its own keys.
 
+### An agent in Go
+
+An agent is plain Go code that imports the Kit and calls `run.Run`. There is no `init` command and no template: add the tools one at a time, as you need them. `cmd/devagent` is an example.
+
+```go
+cfg := run.Config{
+	Name:      "Example",
+	Model:     "deepseek/deepseek-v4-flash-0731",
+	Home:      "./home", // prompts/system.md, policy.json, memory/*.md
+	Groups:    []group.Group{ /* tool groups */ },
+	Tools:     func(k run.Kit) ([]tool.Tool, error) { /* the agent's own tools */ },
+	CoreTools: []string{"list_notes", "write_note"},
+}
+log.Fatal(run.Run(context.Background(), cfg))
+```
+
+The tools are fixed at start. An agent never writes or changes its own tools at runtime: a tool changes only through a PR that a person reviews. Do not give an agent a toolset that loads tools at runtime (`mcptoolset`, `skilltoolset`), unless you pin it to a list that a person reviewed.
+
+`run.Run` does this:
+
+- It reads the keys in one of three modes: env, Agent Vault, or an Infisical identity (`IdentityFile`).
+- It turns on the tool groups, puts each write tool behind the approval gate, and makes the briefing from the home.
+- It keeps the instruction and the core tools fixed for the provider's cache. With `ToolSearch`, the other tools wait behind `search_tools`. A long thread is compacted.
+- It serves A2A, the ADK REST API, the Kit endpoints (`/kit/info`, `/kit/dashboard`, `/kit/transcribe`) and the console.
+
+| Variable | What it does |
+| --- | --- |
+| `<PREFIX>_HEADLESS=1` | Container mode: no terminal chat, `/healthz` on `<PREFIX>_HEALTH_ADDR` (default `:8080`), and a clean stop on SIGTERM. A new secret goes to the Infisical inbox folder, or is refused when there is no store. |
+| `<PREFIX>_ADDR` | Where the console and A2A listen. Default `127.0.0.1:4141`. |
+| `<PREFIX>_TOKEN` | The bearer token, when the address is not loopback. |
+| `<PREFIX>_TRUSTED_HEADER` | A header that a trusted proxy sets with the user's name, when the address is not loopback. |
+| `<PREFIX>_MODEL`, `<PREFIX>_DB` | Replace the model id and the SQLite file. |
+| `<PREFIX>_KEYS=user` | Use the caller's own keys, not the identity file. |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | Sends traces, logs and metrics over OTLP. Each model call adds its tokens (input, output, cached, reasoning) to `gen_ai.client.token.usage`, and its cost to `kit.llm.cost`. |
+
+`<PREFIX>` is the agent's name in upper case, or `Config.EnvPrefix`.
+
+On a laptop, the terminal chat starts only when stdin is a terminal. A new secret goes to that terminal, never to the model or a client.
+
+### Auth
+
+On a loopback address, the agent has no auth. It refuses a browser request from another origin (unless the origin is in `Config.Origins`), a request for another host name (DNS rebinding), and a form post.
+
+On any other address, the agent does not start without auth. It uses ADK's `server/authn`, and there are two choices:
+
+- **A bearer token**: set `<PREFIX>_TOKEN` (32 characters or more). Each request needs `Authorization: Bearer <token>`. This is for programs, such as another agent or a script.
+- **A trusted header**: set `<PREFIX>_TRUSTED_HEADER`, for example `X-Auth-Request-User`. Use it only behind a proxy that does the sign-in and sets that header. A person in a browser needs this, because the console cannot send a bearer token. The proxy must remove the header from the client's request, or a client could set it.
+
+`/healthz` listens on its own address and needs no auth. The ADK REST API runs with no per-user rule (`authz`), so any caller that passes auth can act as any user. That is enough for one operator, and not for a team.
+
 ### Run the console on a laptop
 
 You need Go 1.27 and Node 24.
@@ -104,7 +154,7 @@ You need Go 1.27 and Node 24.
    cd web && npm ci && npm run build && cd ..
    ```
 
-2. Build the agent. The binary has the console in it:
+2. Build the dev agent. The binary has the console in it:
 
    ```bash
    go build -o devagent ./cmd/devagent

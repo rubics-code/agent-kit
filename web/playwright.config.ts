@@ -20,7 +20,7 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: `go run ../cmd/devagent -fake -db ${db} -addr 127.0.0.1:${agentPort}`,
+      command: `go run ../cmd/devagent -fake -db ${db} -addr 127.0.0.1:${agentPort} -origins http://127.0.0.1:${webPort}`,
       url: `http://127.0.0.1:${agentPort}/.well-known/agent-card.json`,
       timeout: 120_000,
       reuseExistingServer: false,
