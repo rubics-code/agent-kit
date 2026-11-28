@@ -21,3 +21,28 @@ jobs:
       - run: npm run type-check
       - run: npm test
       - run: npm run pack-check
+
+  # The ADK Go spike is its own Go module. It needs no key: the live tests are manual.
+  spike-adk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: spike/adk
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: spike/adk/go.mod
+          cache-dependency-path: spike/adk/go.sum
+      - run: test -z "$(gofmt -l .)"
+      - run: go vet ./...
+      - run: go test ./...
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: spike/adk/web/package-lock.json
+      - run: npm ci
+        working-directory: spike/adk/web
+      - run: npm run build
+        working-directory: spike/adk/web
