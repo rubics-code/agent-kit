@@ -1,0 +1,213 @@
+{
+ "jsonrpc": "2.0",
+ "id": 1,
+ "result": {
+  "task": {
+   "id": "01a22064-6156-7da8-9cee-baa47283bdf5",
+   "artifacts": [
+    {
+     "artifactId": "01a22064-65f6-7cfc-82d5-64dae1c08032",
+     "parts": [
+      {
+       "data": {
+        "args": {
+         "body": "read Dune.",
+         "title": "Books"
+        },
+        "id": "call_89101f624c954e119b1dee40",
+        "name": "write_note"
+       },
+       "metadata": {
+        "adk_is_long_running": false,
+        "adk_type": "function_call"
+       }
+      },
+      {
+       "data": {
+        "id": "call_89101f624c954e119b1dee40",
+        "name": "write_note",
+        "response": {
+         "status": "waiting for approval"
+        }
+       },
+       "metadata": {
+        "adk_type": "function_response"
+       }
+      }
+     ]
+    }
+   ],
+   "contextId": "ctx-a2a-1",
+   "history": [
+    {
+     "messageId": "8cf8a50d-c11e-4ce0-b5ab-02700abb9afc",
+     "contextId": "ctx-a2a-1",
+     "metadata": {
+      "a2uiRendererCapabilities": {
+       "1.0": {
+        "supportedCatalogIds": [
+         "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+        ]
+       }
+      }
+     },
+     "parts": [
+      {
+       "text": "Write a note called Books with the text: read Dune."
+      }
+     ],
+     "role": "ROLE_USER"
+    }
+   ],
+   "metadata": {
+    "adk_app_name": "spike",
+    "adk_session_id": "ctx-a2a-1",
+    "adk_user_id": "A2A_USER_ctx-a2a-1",
+    "https://google.github.io/adk-docs/a2a/a2a-extension/": true
+   },
+   "status": {
+    "message": {
+     "messageId": "01a22064-65fb-76dd-9172-02e8cb4658aa",
+     "parts": [
+      {
+       "data": {
+        "args": {
+         "originalFunctionCall": {
+          "args": {
+           "body": "read Dune.",
+           "title": "Books"
+          },
+          "id": "call_89101f624c954e119b1dee40",
+          "name": "write_note"
+         },
+         "toolConfirmation": {
+          "confirmed": false,
+          "hint": "Write the note \"Books\" (10 characters): \"read Dune.\"",
+          "payload": {
+           "args": {
+            "body": "read Dune.",
+            "title": "Books"
+           },
+           "argsHash": "sha256:b6ded02e707659aa9fd082e893af081fa02a8c7d335bcde2b3fd03eaae3977d0",
+           "summary": "Write the note \"Books\" (10 characters): \"read Dune.\"",
+           "tool": "write_note"
+          }
+         }
+        },
+        "id": "adk-84b7ba94-59dc-4ff6-b0b4-4e4542a26aef",
+        "name": "adk_request_confirmation"
+       },
+       "metadata": {
+        "adk_is_long_running": true,
+        "adk_type": "function_call"
+       }
+      },
+      {
+       "data": [
+        {
+         "createSurface": {
+          "catalogId": "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",
+          "surfaceId": "approval-adk-84b7ba94-59dc-4ff6-b0b4-4e4542a26aef"
+         },
+         "version": "1.0"
+        },
+        {
+         "updateComponents": {
+          "components": [
+           {
+            "child": "body",
+            "component": "Card",
+            "id": "root"
+           },
+           {
+            "children": [
+             "title",
+             "summary",
+             "hash",
+             "buttons"
+            ],
+            "component": "Column",
+            "id": "body"
+           },
+           {
+            "component": "Text",
+            "id": "title",
+            "text": "Approve write_note?"
+           },
+           {
+            "component": "Text",
+            "id": "summary",
+            "text": "Write the note \"Books\" (10 characters): \"read Dune.\""
+           },
+           {
+            "component": "Text",
+            "id": "hash",
+            "text": "Args hash: sha256:b6ded02e707659aa9fd082e893af081fa02a8c7d335bcde2b3fd03eaae3977d0"
+           },
+           {
+            "children": [
+             "approve",
+             "reject"
+            ],
+            "component": "Row",
+            "id": "buttons"
+           },
+           {
+            "action": {
+             "event": {
+              "context": {
+               "argsHash": "sha256:b6ded02e707659aa9fd082e893af081fa02a8c7d335bcde2b3fd03eaae3977d0",
+               "confirmationId": "adk-84b7ba94-59dc-4ff6-b0b4-4e4542a26aef"
+              },
+              "name": "kit.approve"
+             }
+            },
+            "child": "approve_label",
+            "component": "Button",
+            "id": "approve",
+            "variant": "primary"
+           },
+           {
+            "component": "Text",
+            "id": "approve_label",
+            "text": "Approve"
+           },
+           {
+            "action": {
+             "event": {
+              "context": {
+               "argsHash": "sha256:b6ded02e707659aa9fd082e893af081fa02a8c7d335bcde2b3fd03eaae3977d0",
+               "confirmationId": "adk-84b7ba94-59dc-4ff6-b0b4-4e4542a26aef"
+              },
+              "name": "kit.reject"
+             }
+            },
+            "child": "reject_label",
+            "component": "Button",
+            "id": "reject",
+            "variant": "default"
+           },
+           {
+            "component": "Text",
+            "id": "reject_label",
+            "text": "Reject"
+           }
+          ],
+          "surfaceId": "approval-adk-84b7ba94-59dc-4ff6-b0b4-4e4542a26aef"
+         },
+         "version": "1.0"
+        }
+       ],
+       "metadata": {
+        "mimeType": "application/a2ui+json"
+       }
+      }
+     ],
+     "role": "ROLE_AGENT"
+    },
+    "state": "TASK_STATE_INPUT_REQUIRED",
+    "timestamp": "2026-11-28T04:23:00.347Z"
+   }
+  }
+ }
+}
