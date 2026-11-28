@@ -12,7 +12,12 @@ export default defineConfig({
   timeout: 30_000,
   retries: process.env.CI ? 1 : 0,
   use: { baseURL: `http://127.0.0.1:${webPort}`, trace: "retain-on-failure" },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
+    },
+  ],
   webServer: [
     {
       command: `go run ../cmd/devagent -fake -db ${db} -addr 127.0.0.1:${agentPort}`,

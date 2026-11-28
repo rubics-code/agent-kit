@@ -208,3 +208,15 @@ a:hover { color: #f7a9b0; }
 .dash-empty { border: 1px dashed var(--line-field); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; justify-content: center; gap: 10px; color: var(--muted); font-size: 13px; line-height: 1.5; min-height: 140px; }
 .btn.small { height: 30px; padding: 0 10px; font-size: 12px; font-weight: 500; }
 @media (max-width: 820px) { .dash-head, .dash-grid { padding-left: 12px; padding-right: 12px; } .dash-grid { grid-template-columns: 1fr; } }
+
+/* Hold to talk */
+.talk-btn { height: 48px; padding: 0 18px 0 14px; border: 0; border-radius: 12px; background: var(--accent); color: var(--accent-ink); display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px; touch-action: none; user-select: none; -webkit-user-select: none; }
+.composer.recording { background: #22151a; border-color: var(--accent); gap: 14px; padding-left: 16px; }
+.rec-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+.rec-time { font-size: 13px; color: #f7a9b0; }
+.rec-hint { flex: 1; min-width: 0; color: var(--text); font-size: 15px; }
+.composer.recording .bars { height: 24px; }
+.composer.recording .bars span { height: 24px; }
+.composer.recording .bars span:nth-child(4) { animation-delay: 0.45s; }
+.composer.recording .bars span:nth-child(5) { animation-delay: 0.6s; }
+.composer.recording .bars span:nth-child(6) { animation-delay: 0.75s; }

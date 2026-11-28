@@ -39,7 +39,7 @@ export function App() {
           thread={c.thread}
           busy={c.busy}
           onMenu={() => setNavOpen(true)}
-          actions={{ send: (t) => void c.send(t), action: c.action, decide: c.decideDirect, addToDashboard: c.addToDashboard }}
+          actions={{ send: (t, voice) => void c.send(t, { voice }), action: c.action, decide: c.decideDirect, addToDashboard: c.addToDashboard }}
         />
       )}
       {c.route.name === "thread" && !c.agent && (
