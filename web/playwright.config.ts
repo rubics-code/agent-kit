@@ -4,6 +4,7 @@ import { defineConfig, devices } from "@playwright/test";
 // and make no provider calls.
 const agentPort = 8096;
 const webPort = 5174;
+const helperPort = 8097;
 const db = `${process.env.TMPDIR ?? "/tmp"}/console-e2e-${Date.now()}.db`;
 
 export default defineConfig({
@@ -16,6 +17,12 @@ export default defineConfig({
     {
       command: `go run ../cmd/devagent -fake -db ${db} -addr 127.0.0.1:${agentPort}`,
       url: `http://127.0.0.1:${agentPort}/.well-known/agent-card.json`,
+      timeout: 120_000,
+      reuseExistingServer: false,
+    },
+    {
+      command: `go run ../cmd/devagent -fake -name helper -db ${db}.helper -addr 127.0.0.1:${helperPort} -origins http://127.0.0.1:${webPort}`,
+      url: `http://127.0.0.1:${helperPort}/.well-known/agent-card.json`,
       timeout: 120_000,
       reuseExistingServer: false,
     },

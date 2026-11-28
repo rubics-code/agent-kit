@@ -171,3 +171,23 @@ a:hover { color: #f7a9b0; }
 .kit-fields dt { color: var(--muted); }
 .kit-fields dd { margin: 0; overflow-wrap: anywhere; }
 @media (max-width: 820px) { .kit-fields { grid-template-columns: 1fr; } }
+
+/* Connect */
+.connect-page { align-items: center; justify-content: center; padding: 24px; background: #08090a; overflow-y: auto; }
+.connect { width: 100%; max-width: 720px; background: var(--panel); border: 1px solid var(--line-field); border-radius: 18px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6); display: flex; flex-direction: column; overflow: hidden; }
+.connect-head { padding: 24px 28px 8px; display: flex; align-items: flex-start; gap: 16px; }
+.connect-head h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+.connect-head p { margin: 0; color: var(--muted); line-height: 1.5; }
+.close-btn { width: 34px; height: 34px; border-radius: 8px; border: 1px solid var(--line-strong); background: transparent; color: var(--text-2); }
+.connect-box { margin: 16px 28px 0; padding: 18px; background: #101114; border: 1px solid var(--line); border-radius: 14px; display: flex; flex-direction: column; gap: 10px; }
+.addr-row { display: flex; gap: 8px; }
+.addr-row input { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line-field); background: var(--field); color: var(--text); font-size: 13px; }
+.addr-row .btn { height: 40px; }
+.card-found { display: flex; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.ok-line { font-size: 12px; color: var(--ok); }
+.connected { margin: 16px 28px 0; display: flex; flex-direction: column; gap: 4px; }
+.connected .side-label { padding: 0 0 6px; }
+.connected-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--line-soft); }
+.link-btn { border: 0; background: transparent; color: var(--accent-soft); font-size: 12px; }
+.connect-foot { padding: 20px 28px 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.connect-foot .btn { height: 40px; }

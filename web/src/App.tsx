@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Connect } from "./components/Connect";
 import { Sidebar } from "./components/Sidebar";
 import { ThreadView } from "./components/ThreadView";
 import { useConsole } from "./lib/useConsole";
@@ -41,7 +42,10 @@ export function App() {
       {c.route.name === "thread" && !c.agent && (
         <main className="main"><div className="blank">No agent is connected. Use “Connect an agent” in the sidebar.</div></main>
       )}
-      {c.route.name !== "thread" && (
+      {c.route.name === "connect" && (
+        <Connect agents={c.agents} onConnect={c.connect} onRemove={c.removeAgent} onClose={() => history.back()} />
+      )}
+      {c.route.name === "dashboard" && (
         <main className="main"><div className="blank">This screen comes in a later step.</div></main>
       )}
     </div>
