@@ -82,14 +82,21 @@ func decode[T any](v any) (T, error) {
 type CardBuilder func(confirmationID string, ap approval.Approval) []any
 
 // ApprovalCards gives an AfterExecuteCallback that puts an A2UI card next to
-// each confirmation in an input-required status. It adds a card only when the
-// client renders the catalog.
-func ApprovalCards(catalog string, build CardBuilder) adka2a.AfterExecuteCallback {
+// each confirmation in an input-required status. It uses the first choice
+// whose catalog the client renders, and adds no card when there is none.
+func ApprovalCards(choices ...Choice) adka2a.AfterExecuteCallback {
 	return func(ctx adka2a.ExecutorContext, ev *a2a.TaskStatusUpdateEvent, err error) error {
 		if err != nil || ev == nil || ev.Status.State != a2a.TaskStateInputRequired || ev.Status.Message == nil {
 			return err
 		}
-		if !Renders(ctx.RequestContext().Message, catalog) {
+		var build CardBuilder
+		for _, c := range choices {
+			if Renders(ctx.RequestContext().Message, c.Catalog) {
+				build = c.Build
+				break
+			}
+		}
+		if build == nil {
 			return nil
 		}
 		var cards []*a2a.Part
