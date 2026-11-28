@@ -1,0 +1,23 @@
+{
+  "name": "adk-spike-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build"
+  },
+  "dependencies": {
+    "@a2ui/react": "0.16.1",
+    "@a2ui/web_core": "0.16.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "typescript": "^5.9.0",
+    "vite": "^8.4.0"
+  }
+}

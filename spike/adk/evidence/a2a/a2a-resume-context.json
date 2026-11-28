@@ -1,0 +1,81 @@
+{
+ "jsonrpc": "2.0",
+ "id": 1,
+ "result": {
+  "task": {
+   "id": "01a22064-94fd-721e-ac97-303d8025164c",
+   "artifacts": [
+    {
+     "artifactId": "01a22064-94ff-7ab2-a6a4-e4f524ce5e90",
+     "parts": [
+      {
+       "data": {
+        "id": "call_89101f624c954e119b1dee40",
+        "name": "write_note",
+        "response": {
+         "status": "written",
+         "title": "Books"
+        }
+       },
+       "metadata": {
+        "adk_type": "function_response"
+       }
+      },
+      {
+       "text": "Wrote the note \"Books\" with the text \"read Dune.\""
+      }
+     ]
+    }
+   ],
+   "contextId": "ctx-a2a-1",
+   "history": [
+    {
+     "messageId": "921ffcec-f477-499a-b4d3-821d65a33566",
+     "contextId": "ctx-a2a-1",
+     "metadata": {
+      "a2uiRendererCapabilities": {
+       "1.0": {
+        "supportedCatalogIds": [
+         "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+        ]
+       }
+      }
+     },
+     "parts": [
+      {
+       "data": [
+        {
+         "action": {
+          "context": {
+           "argsHash": "sha256:b6ded02e707659aa9fd082e893af081fa02a8c7d335bcde2b3fd03eaae3977d0",
+           "confirmationId": "adk-84b7ba94-59dc-4ff6-b0b4-4e4542a26aef"
+          },
+          "name": "kit.approve",
+          "sourceComponentId": "approve",
+          "surfaceId": "approval-adk-84b7ba94-59dc-4ff6-b0b4-4e4542a26aef",
+          "timestamp": "2026-11-28T04:30:00Z"
+         },
+         "version": "1.0"
+        }
+       ],
+       "metadata": {
+        "mimeType": "application/a2ui+json"
+       }
+      }
+     ],
+     "role": "ROLE_USER"
+    }
+   ],
+   "metadata": {
+    "adk_app_name": "spike",
+    "adk_session_id": "ctx-a2a-1",
+    "adk_user_id": "A2A_USER_ctx-a2a-1",
+    "https://google.github.io/adk-docs/a2a/a2a-extension/": true
+   },
+   "status": {
+    "state": "TASK_STATE_COMPLETED",
+    "timestamp": "2026-11-28T04:23:13.214Z"
+   }
+  }
+ }
+}
