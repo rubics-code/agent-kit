@@ -31,6 +31,7 @@ import (
 	"github.com/rubics-code/agent-kit/kit/dashboard"
 	"github.com/rubics-code/agent-kit/kit/fakemodel"
 	"github.com/rubics-code/agent-kit/kit/taskstore"
+	"github.com/rubics-code/agent-kit/kit/transcribe"
 )
 
 const instruction = `You are the dev agent of the Rubics Code agent kit. You keep a small notebook.
@@ -41,9 +42,9 @@ A person must approve each write_note call. When a write waits for approval, say
 Answer in short, plain sentences.`
 
 type config struct {
-	addr, db, model, baseURL, name string
-	fake                           bool
-	origins                        []string
+	addr, db, model, baseURL, name, sttModel string
+	fake                                     bool
+	origins                                  []string
 }
 
 func main() {
@@ -54,6 +55,7 @@ func main() {
 	flag.StringVar(&c.model, "model", "deepseek/deepseek-v4-flash-0731", "OpenRouter model id")
 	flag.StringVar(&c.baseURL, "base-url", "https://openrouter.ai/api/v1", "OpenAI-compatible base URL")
 	flag.StringVar(&c.name, "name", "devagent", "the agent's name")
+	flag.StringVar(&c.sttModel, "stt-model", transcribe.DefaultModel, "OpenRouter audio model for hold-to-talk")
 	flag.BoolVar(&c.fake, "fake", false, "use the fake model (no key, no provider calls)")
 	flag.StringVar(&origins, "origins", "http://localhost:5173,http://127.0.0.1:5173", "browser origins that may call this agent, comma separated")
 	flag.Parse()
@@ -130,7 +132,18 @@ func build(ctx context.Context, c config) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	return routes(a, sessions, tasks, dash, c)
+	var stt transcribe.Transcriber = transcribe.Fake{Text: "say hello"}
+	if !c.fake {
+		stt = transcribe.OpenRouter{APIKey: os.Getenv("OPENROUTER_API_KEY"), BaseURL: c.baseURL, Model: c.sttModel}
+	}
+	h, err := routes(a, sessions, tasks, dash, c)
+	if err != nil {
+		return nil, err
+	}
+	mux := http.NewServeMux()
+	mux.Handle("/kit/transcribe", cors(c.origins, transcribe.Handler(stt)))
+	mux.Handle("/", h)
+	return mux, nil
 }
 
 // routes serves A2A on /a2a, the ADK REST API on /api, and the agent card.

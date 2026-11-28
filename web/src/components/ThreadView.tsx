@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ActionPayload } from "@a2ui/web_core";
 import type { Agent } from "../lib/storage";
 import type { Item, Thread } from "../lib/thread";
 import { agentColor, clock, initial, toolLabel } from "../lib/look";
 import { A2uiBlock } from "./A2uiBlock";
 import { Approval } from "./Approval";
-import { IconMenu } from "./icons";
+import { IconMenu, IconMic } from "./icons";
+import { Recorder, transcribe } from "../lib/voice";
 
 export type ThreadActions = {
-  send: (text: string) => void;
+  send: (text: string, voice?: boolean) => void;
   addToDashboard: (itemId: string) => Promise<void>;
   action: (a: ActionPayload) => void;
   decide: (confirmationId: string, approve: boolean) => void;
@@ -167,28 +168,160 @@ function ToolCard({ item, onAdd }: { item: Extract<Item, { kind: "surface" }>; o
   );
 }
 
-function Composer({ agent, busy, onSend }: { agent: Agent; busy: boolean; onSend: (t: string) => void }) {
+function Composer({ agent, busy, onSend }: { agent: Agent; busy: boolean; onSend: (t: string, voice?: boolean) => void }) {
   const [text, setText] = useState("");
+  const voice = useHoldToTalk(agent, (said) => onSend(said, true));
   const submit = () => {
     const t = text.trim();
     if (!t || busy) return;
     onSend(t);
     setText("");
   };
+  const holdKeys = {
+    onKeyDown: (e: React.KeyboardEvent) => {
+      if ((e.key === " " || e.key === "Enter") && !e.repeat && e.currentTarget.tagName === "BUTTON") {
+        e.preventDefault();
+        void voice.start();
+      }
+      if (e.key === "Escape") void voice.stop(true);
+    },
+    onKeyUp: (e: React.KeyboardEvent) => {
+      if ((e.key === " " || e.key === "Enter") && e.currentTarget.tagName === "BUTTON") void voice.stop();
+    },
+  };
   return (
     <div className="composer-wrap">
       <div className="composer-col">
-        <form className="composer" onSubmit={(e) => { e.preventDefault(); submit(); }}>
-          <label htmlFor="msg" className="sr-only">Message {agent.name}</label>
-          <input id="msg" value={text} onChange={(e) => setText(e.target.value)} placeholder={`Type to ${agent.name}`} autoComplete="off" />
-          <button type="submit" className="send-btn" disabled={busy || !text.trim()}>Send</button>
-        </form>
+        {voice.state === "recording" ? (
+          <div className="composer recording" role="status" aria-label="Recording">
+            <span className="rec-dot" aria-hidden="true" />
+            <span className="mono rec-time">{voice.clock}</span>
+            <span className="bars" aria-hidden="true"><span /><span /><span /><span /><span /><span /></span>
+            <span className="rec-hint">Listening…</span>
+            <button
+              type="button"
+              className="talk-btn"
+              onPointerUp={() => void voice.stop()}
+              onPointerLeave={(e) => e.buttons && void voice.stop()}
+              onKeyUp={holdKeys.onKeyUp}
+              onKeyDown={holdKeys.onKeyDown}
+              autoFocus
+            >
+              Release to send
+            </button>
+          </div>
+        ) : (
+          <form className="composer" onSubmit={(e) => { e.preventDefault(); submit(); }}>
+            <label htmlFor="msg" className="sr-only">Message {agent.name}</label>
+            <input
+              id="msg"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === " " && !text && !e.repeat) {
+                  e.preventDefault();
+                  void voice.start();
+                }
+              }}
+              onKeyUp={(e) => e.key === " " && !text && void voice.stop()}
+              placeholder={voice.state === "working" ? "Turning your words into text…" : `Type to ${agent.name}, or hold Space to talk`}
+              autoComplete="off"
+              disabled={voice.state === "working"}
+            />
+            {text.trim() ? (
+              <button type="submit" className="send-btn" disabled={busy}>Send</button>
+            ) : (
+              <button
+                type="button"
+                className="talk-btn"
+                aria-label={`Hold to talk to ${agent.name}`}
+                disabled={voice.state === "working"}
+                onPointerDown={(e) => { e.preventDefault(); void voice.start(); }}
+                onPointerUp={() => void voice.stop()}
+                onKeyDown={holdKeys.onKeyDown}
+                onKeyUp={holdKeys.onKeyUp}
+              >
+                <IconMic /> Hold to talk
+              </button>
+            )}
+          </form>
+        )}
+        {voice.error && <div className="error-line" role="alert">{voice.error}</div>}
         <div className="hints">
+          <span><b>Space</b> hold to talk</span>
           <span><b>Enter</b> send text</span>
+          <span><b>Esc</b> cancel</span>
           <span style={{ flex: 1 }} />
           <span>Keys stay on the agent. This page holds none.</span>
         </div>
       </div>
     </div>
   );
+}
+
+// useHoldToTalk records while a person holds, then sends the audio to the
+// agent for text.
+function useHoldToTalk(agent: Agent, onText: (t: string) => void) {
+  const rec = useRef<{ r: Recorder; ready: Promise<boolean> } | undefined>(undefined);
+  const started = useRef(0);
+  const [state, setState] = useState<"idle" | "recording" | "working">("idle");
+  const [error, setError] = useState<string>();
+  const [now, setNow] = useState(0);
+
+  useEffect(() => {
+    if (state !== "recording") return;
+    const t = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(t);
+  }, [state]);
+
+  const start = useCallback(async () => {
+    if (rec.current) return;
+    setError(undefined);
+    const r = new Recorder();
+    started.current = Date.now();
+    const ready = r.start().then(
+      () => true,
+      () => false,
+    );
+    rec.current = { r, ready };
+    if (await ready) {
+      if (rec.current?.r === r) {
+        setNow(Date.now());
+        setState("recording");
+      }
+    } else {
+      if (rec.current?.r === r) rec.current = undefined;
+      setError("The browser did not give the microphone. Allow it for this page, then try again.");
+    }
+  }, []);
+
+  const stop = useCallback(
+    async (cancel = false) => {
+      const cur = rec.current;
+      if (!cur) return;
+      rec.current = undefined;
+      const short = Date.now() - started.current < 400;
+      if (!(await cur.ready)) return;
+      const blob = await cur.r.stop(cancel || short);
+      if (!blob) {
+        setState("idle");
+        if (short && !cancel) setError("Hold the button while you talk.");
+        return;
+      }
+      setState("working");
+      try {
+        const said = await transcribe(agent, blob);
+        if (said) onText(said);
+        else setError("No speech was heard.");
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+      } finally {
+        setState("idle");
+      }
+    },
+    [agent, onText],
+  );
+
+  const secs = Math.max(0, Math.floor((now - started.current) / 1000));
+  return { state, error, start, stop, clock: `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, "0")}` };
 }
