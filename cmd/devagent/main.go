@@ -21,6 +21,7 @@ import (
 	"google.golang.org/adk/v2/agent/llmagent"
 	"google.golang.org/adk/v2/model"
 	"google.golang.org/adk/v2/model/openaimodel"
+	"google.golang.org/adk/v2/plugin"
 	"google.golang.org/adk/v2/runner"
 	adka2a "google.golang.org/adk/v2/server/adka2a/v2"
 	"google.golang.org/adk/v2/server/adkrest"
@@ -28,8 +29,10 @@ import (
 	"google.golang.org/adk/v2/session/database"
 
 	"github.com/rubics-code/agent-kit/kit/a2ui"
+	"github.com/rubics-code/agent-kit/kit/approval"
 	"github.com/rubics-code/agent-kit/kit/dashboard"
 	"github.com/rubics-code/agent-kit/kit/fakemodel"
+	"github.com/rubics-code/agent-kit/kit/policy"
 	"github.com/rubics-code/agent-kit/kit/taskstore"
 	"github.com/rubics-code/agent-kit/kit/transcribe"
 	"github.com/rubics-code/agent-kit/web"
@@ -109,7 +112,7 @@ func build(ctx context.Context, c config) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	tools, err := noteTools(db)
+	tools, err := noteTools(db, policy.Policy{Agent: c.name, Operator: "the operator"})
 	if err != nil {
 		return nil, err
 	}
@@ -124,11 +127,12 @@ func build(ctx context.Context, c config) (http.Handler, error) {
 	tools = append(tools, put)
 
 	a, err := llmagent.New(llmagent.Config{
-		Name:        c.name,
-		Description: "The Kit's agent for development. It keeps a notebook.",
-		Model:       m,
-		Instruction: instruction,
-		Tools:       tools,
+		Name:                c.name,
+		Description:         "The Kit's agent for development. It keeps a notebook.",
+		Model:               m,
+		Instruction:         instruction,
+		Tools:               tools,
+		AfterModelCallbacks: []llmagent.AfterModelCallback{approval.FalseClaimCheck()},
 	})
 	if err != nil {
 		return nil, err
@@ -153,10 +157,16 @@ func build(ctx context.Context, c config) (http.Handler, error) {
 
 // routes serves A2A on /a2a, the ADK REST API on /api, and the agent card.
 func routes(a agent.Agent, sessions session.Service, tasks *taskstore.Store, dash *dashboard.Store, c config) (http.Handler, error) {
+	guard, err := approval.ReplayGuard()
+	if err != nil {
+		return nil, err
+	}
+	plugins := runner.PluginConfig{Plugins: []*plugin.Plugin{guard}}
 	mux := http.NewServeMux()
 	rest, err := adkrest.NewServer(adkrest.ServerConfig{
 		SessionService: sessions,
 		AgentLoader:    agent.NewSingleLoader(a),
+		PluginConfig:   plugins,
 		BindHost:       c.addr,
 		AllowedOrigins: c.origins,
 	})
@@ -183,7 +193,7 @@ func routes(a agent.Agent, sessions session.Service, tasks *taskstore.Store, das
 		},
 	}
 	exec := adka2a.NewExecutor(adka2a.ExecutorConfig{
-		RunnerConfig:         runner.Config{AppName: a.Name(), Agent: a, SessionService: sessions},
+		RunnerConfig:         runner.Config{AppName: a.Name(), Agent: a, SessionService: sessions, PluginConfig: plugins},
 		RunConfig:            agent.RunConfig{StreamingMode: agent.StreamingModeSSE},
 		A2APartConverter:     a2ui.ToGenAI,
 		AfterExecuteCallback: a2ui.ApprovalCards(a2ui.DefaultChoices...),

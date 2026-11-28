@@ -11,6 +11,7 @@ import (
 
 	"github.com/rubics-code/agent-kit/kit/a2ui"
 	"github.com/rubics-code/agent-kit/kit/approval"
+	"github.com/rubics-code/agent-kit/kit/policy"
 )
 
 type Note struct {
@@ -45,7 +46,7 @@ func writeSummary(a writeArgs) string {
 	return fmt.Sprintf("Write the note %q (%d characters): %q", a.Title, len([]rune(a.Body)), body)
 }
 
-func noteTools(db *gorm.DB) ([]tool.Tool, error) {
+func noteTools(db *gorm.DB, pol policy.Policy) ([]tool.Tool, error) {
 	if err := db.AutoMigrate(&Note{}); err != nil {
 		return nil, err
 	}
@@ -71,23 +72,19 @@ func noteTools(db *gorm.DB) ([]tool.Tool, error) {
 	if err != nil {
 		return nil, err
 	}
-	write, err := functiontool.New(functiontool.Config{
+	write, err := approval.Tool(approval.Spec[writeArgs, struct{}]{
 		Name:        "write_note",
 		Description: "Write a note to the notebook. A person must approve each write.",
-	}, func(ctx agent.Context, a writeArgs) (writeResult, error) {
-		d, err := approval.Gate(ctx, "write_note", writeSummary(a), a)
-		switch {
-		case err != nil:
-			return writeResult{}, err
-		case d == approval.Pending:
-			return writeResult{Status: "waiting for approval"}, nil
-		case d == approval.Rejected:
-			return writeResult{Status: "rejected"}, nil
-		}
-		if err := db.Save(&Note{Title: a.Title, Body: a.Body}).Error; err != nil {
-			return writeResult{}, err
-		}
-		return writeResult{Status: "written", Title: a.Title}, nil
+		Policy:      pol,
+		Prepare: func(_ agent.Context, a writeArgs) (approval.Prep[struct{}], error) {
+			return approval.Prep[struct{}]{Summary: writeSummary(a)}, nil
+		},
+		Run: func(_ agent.Context, a writeArgs, _ struct{}) (any, error) {
+			if err := db.Save(&Note{Title: a.Title, Body: a.Body}).Error; err != nil {
+				return nil, err
+			}
+			return writeResult{Status: "written", Title: a.Title}, nil
+		},
 	})
 	if err != nil {
 		return nil, err

@@ -75,6 +75,9 @@ func afterTool(fr *genai.FunctionResponse) *genai.Content {
 		return text(fmt.Sprintf("The tool %s failed: %v", fr.Name, e))
 	}
 	status, _ := fr.Response["status"].(string)
+	if r, _ := fr.Response["result"].(string); strings.HasPrefix(r, "Not done:") {
+		return text("You rejected the write, so I did not write the note.")
+	}
 	switch fr.Name {
 	case "write_note":
 		switch status {
