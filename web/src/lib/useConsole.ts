@@ -3,7 +3,8 @@ import type { ActionPayload } from "@a2ui/web_core";
 import { A2AClient, A2UI_MIME, endpointFor, fetchCard, newId, rendersA2UI, userMessage, type Part } from "./a2a";
 import { catalogIds } from "./catalogs";
 import { agentId, loadAgents, loadThreads, saveAgents, saveThreads, upsertAgent, type Agent } from "./storage";
-import { addError, addUser, applyEvent, decide, newThread, type Thread } from "./thread";
+import { addCard, cardIdFor, fetchCards, removeCard, sortCards, type DashCard } from "./dashboard";
+import { addError, addUser, applyEvent, decide, markOnDashboard, newThread, type Thread } from "./thread";
 
 export type Route = { name: "thread" | "dashboard" | "connect"; threadId?: string };
 
@@ -24,6 +25,9 @@ export function useConsole() {
   const [route, setRoute] = useState<Route>(() => parseRoute(location.hash));
   const [draftId, setDraftId] = useState(() => newId());
   const [busy, setBusy] = useState<Record<string, boolean>>({});
+  const [cards, setCards] = useState<DashCard[]>([]);
+  const [dashError, setDashError] = useState<string>();
+  const [dashTick, setDashTick] = useState(0);
   const threadsRef = useRef(threads);
   threadsRef.current = threads;
 
@@ -71,25 +75,32 @@ export function useConsole() {
         update(id, (t) => addError(t, `The agent did not answer: ${e instanceof Error ? e.message : String(e)}`, Date.now()));
       } finally {
         setBusy((b) => ({ ...b, [id]: false }));
+        setDashTick((n) => n + 1);
       }
     },
     [update],
   );
 
+  // send puts the text in the current thread. With "to", it starts a new
+  // thread with that agent and stays on the page (the dashboard ask bar).
   const send = useCallback(
-    (text: string, voice = false) => {
-      if (!agent) return;
-      const id = threadId;
+    (text: string, opts: { voice?: boolean; to?: Agent } = {}) => {
+      const target = opts.to ?? agent;
+      if (!target) return undefined;
+      const id = opts.to ? newId() : threadId;
       const now = Date.now();
       setThreads((list) => {
-        const t = list.find((x) => x.id === id) ?? newThread(id, agent.id, now);
+        const t = list.find((x) => x.id === id) ?? newThread(id, target.id, now);
         const rest = list.filter((x) => x.id !== id);
-        return [...rest, addUser(t, text, now, voice)];
+        return [...rest, addUser(t, text, now, opts.voice)];
       });
-      if (!route.threadId) location.hash = `#/t/${id}`;
-      setDraftId(newId());
+      if (!opts.to) {
+        if (!route.threadId) location.hash = `#/t/${id}`;
+        setDraftId(newId());
+      }
       const pending = threadsRef.current.find((x) => x.id === id)?.pendingTaskId;
-      void run(agent, id, [{ text }], pending);
+      void run(target, id, [{ text }], pending);
+      return id;
     },
     [agent, threadId, route.threadId, run],
   );
@@ -147,6 +158,43 @@ export function useConsole() {
     setSelected((s) => (s === id ? undefined : s));
   }, []);
 
+  const refreshCards = useCallback(async () => {
+    const results = await Promise.allSettled(agents.map((a) => fetchCards(a, location.origin)));
+    setCards(sortCards(results.flatMap((r) => (r.status === "fulfilled" ? r.value : []))));
+    const bad = results.find((r) => r.status === "rejected");
+    setDashError(bad && bad.status === "rejected" ? String(bad.reason instanceof Error ? bad.reason.message : bad.reason) : undefined);
+  }, [agents]);
+
+  useEffect(() => {
+    void refreshCards();
+    const t = setInterval(() => void refreshCards(), 20_000);
+    return () => clearInterval(t);
+  }, [refreshCards, dashTick]);
+
+  const addToDashboard = useCallback(
+    async (itemId: string) => {
+      const t = threadsRef.current.find((x) => x.id === threadId);
+      const item = t?.items.find((i) => i.id === itemId);
+      const a = agents.find((x) => x.id === t?.agentId);
+      if (!t || !a || !item || item.kind !== "surface") return;
+      const title = item.title ?? "Card";
+      await addCard(a, { cardId: cardIdFor(title, item.surfaceId), title, a2ui: item.messages, threadId: t.id }, location.origin);
+      update(t.id, (x) => markOnDashboard(x, itemId));
+      await refreshCards();
+    },
+    [agents, threadId, update, refreshCards],
+  );
+
+  const deleteCard = useCallback(
+    async (c: DashCard) => {
+      const a = agents.find((x) => x.id === c.agentId);
+      if (!a) return;
+      await removeCard(a, c.cardId, location.origin);
+      await refreshCards();
+    },
+    [agents, refreshCards],
+  );
+
   const busyThread = Object.entries(busy).find(([, v]) => v)?.[0];
-  return { agents, setAgents, threads, agent, thread, threadId, route, busy: !!busy[threadId], busyThread, send, action, decideDirect, newThread: newThreadNow, selectAgent, setSelected, connect, removeAgent };
+  return { agents, setAgents, threads, agent, thread, threadId, route, busy: !!busy[threadId], busyThread, send, action, decideDirect, newThread: newThreadNow, selectAgent, setSelected, connect, removeAgent, cards, dashError, refreshCards, addToDashboard, deleteCard, busyMap: busy };
 }

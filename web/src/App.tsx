@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { Connect } from "./components/Connect";
+import { Dashboard } from "./components/Dashboard";
+import { ago } from "./lib/look";
+import { lastChange } from "./lib/dashboard";
 import { Sidebar } from "./components/Sidebar";
 import { ThreadView } from "./components/ThreadView";
 import { useConsole } from "./lib/useConsole";
@@ -23,7 +26,7 @@ export function App() {
         threadId={c.threadId}
         route={c.route.name}
         busyThread={c.busyThread}
-        dashboardMeta="Comes soon"
+        dashboardMeta={dashboardMeta(c.cards, now)}
         now={now}
         onAgent={c.selectAgent}
         onThread={(id) => (location.hash = `#/t/${id}`)}
@@ -36,7 +39,7 @@ export function App() {
           thread={c.thread}
           busy={c.busy}
           onMenu={() => setNavOpen(true)}
-          actions={{ send: (t) => c.send(t), action: c.action, decide: c.decideDirect }}
+          actions={{ send: (t) => void c.send(t), action: c.action, decide: c.decideDirect, addToDashboard: c.addToDashboard }}
         />
       )}
       {c.route.name === "thread" && !c.agent && (
@@ -46,8 +49,24 @@ export function App() {
         <Connect agents={c.agents} onConnect={c.connect} onRemove={c.removeAgent} onClose={() => history.back()} />
       )}
       {c.route.name === "dashboard" && (
-        <main className="main"><div className="blank">This screen comes in a later step.</div></main>
+        <Dashboard
+          agents={c.agents}
+          cards={c.cards}
+          threads={c.threads}
+          busy={c.busyMap}
+          error={c.dashError}
+          now={now}
+          onAsk={(text, to) => c.send(text, { to })}
+          onRemove={(card) => void c.deleteCard(card)}
+          onMenu={() => setNavOpen(true)}
+        />
       )}
     </div>
   );
+}
+
+function dashboardMeta(cards: { updatedAt: string }[], now: number): string {
+  if (cards.length === 0) return "No cards yet";
+  const change = lastChange(cards as never);
+  return `${cards.length} card${cards.length === 1 ? "" : "s"} · updated ${change ? ago(change.at, now) : ""}`;
 }
