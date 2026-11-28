@@ -12,6 +12,7 @@ import (
 
 	"google.golang.org/genai"
 
+	"github.com/rubics-code/agent-kit/kit/fakes"
 	"github.com/rubics-code/agent-kit/kit/group"
 	"github.com/rubics-code/agent-kit/kit/internal/kittest"
 	"github.com/rubics-code/agent-kit/kit/policy"
@@ -35,9 +36,23 @@ func (s *sink) Deliver(_ context.Context, _, value string) error {
 	return nil
 }
 
-func setup(t *testing.T, f *fakeOpenRouter, s secrets.Sink, script ...*genai.Content) *kittest.Harness {
+func newFake(t *testing.T) *fakes.OpenRouter {
+	return fakes.NewOpenRouter(t, fakes.SeedKey{Name: "Example", Limit: fakes.USD(20), UsageMonthly: 3})
+}
+
+func client(f *fakes.OpenRouter) *Client {
+	return &Client{ManagementKey: fakes.OpenRouterKey, BaseURL: f.URL, HTTP: f.Client()}
+}
+
+func send(w http.ResponseWriter, status int, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(v)
+}
+
+func setup(t *testing.T, f *fakes.OpenRouter, s secrets.Sink, script ...*genai.Content) *kittest.Harness {
 	t.Helper()
-	asm, err := group.Assemble([]group.Group{Group}, group.Services{"openrouter": f.client()}, s, testPolicy,
+	asm, err := group.Assemble([]group.Group{Group}, group.Services{"openrouter": client(f)}, s, testPolicy,
 		group.Enable{Has: func(string) bool { return true }})
 	if err != nil {
 		t.Fatal(err)
@@ -68,13 +83,13 @@ func TestCreatesAKeyOnlyAfterApprovalAndTheKeyNeverEntersTheConversation(t *test
 	f, s := newFake(t), &sink{}
 	h := setup(t, f, s, createExample, kittest.Text("done"))
 	cs := kittest.Confirmations(h.Say("key for the example site"))
-	if got := kittest.Summary(t, cs[0]); got != `Create the OpenRouter API key "Example chatbot" (limit $10.00 monthly until 2027-06-30)` || f.writeCount() != 0 {
+	if got := kittest.Summary(t, cs[0]); got != `Create the OpenRouter API key "Example chatbot" (limit $10.00 monthly until 2027-06-30)` || len(f.Writes()) != 0 {
 		t.Fatalf("%q", got)
 	}
 	evs := h.Approve(cs[0])
-	want := []map[string]any{{"op": "createKey", "args": map[string]any{"name": "Example chatbot", "limit": float64(10), "limit_reset": "monthly", "expires_at": "2027-06-30T23:59:59Z"}}}
-	if !reflect.DeepEqual(f.writes, want) {
-		t.Fatalf("%v", f.writes)
+	want := []fakes.Write{{Op: "createKey", Args: map[string]any{"name": "Example chatbot", "limit": float64(10), "limit_reset": "monthly", "expires_at": "2027-06-30T23:59:59Z"}}}
+	if !reflect.DeepEqual(f.Writes(), want) {
+		t.Fatalf("%v", f.Writes())
 	}
 	if len(s.delivered) != 1 || !strings.HasPrefix(s.delivered[0], "sk-or-v1-") {
 		t.Fatalf("%v", s.delivered)
@@ -90,8 +105,8 @@ func TestDoesNotCreateAKeyWhenTheOperatorRejects(t *testing.T) {
 	h := setup(t, f, s, createExample, kittest.Text("ok"))
 	cs := kittest.Confirmations(h.Say("key"))
 	h.Reject(cs[0], "no")
-	if f.writeCount() != 0 || len(s.delivered) != 0 {
-		t.Fatal(f.writes, s.delivered)
+	if len(f.Writes()) != 0 || len(s.delivered) != 0 {
+		t.Fatal(f.Writes(), s.delivered)
 	}
 }
 
@@ -103,7 +118,7 @@ func TestRefusesAKeyWithNoLimitOrALimitAboveTheCap(t *testing.T) {
 	), kittest.Text("sorry"))
 	evs := h.Say("x")
 	rs := kittest.Responses(evs)["openrouter_create_key"]
-	if len(kittest.Confirmations(evs)) != 0 || f.writeCount() != 0 || len(rs) != 2 || rs[0]["error"] == nil || rs[1]["error"] == nil {
+	if len(kittest.Confirmations(evs)) != 0 || len(f.Writes()) != 0 || len(rs) != 2 || rs[0]["error"] == nil || rs[1]["error"] == nil {
 		t.Fatal(kittest.AllText(evs))
 	}
 }
@@ -112,13 +127,13 @@ func TestShowsTheCurrentAndNewLimitReadFromOpenRouterBeforeAnUpdate(t *testing.T
 	f := newFake(t)
 	h := setup(t, f, &sink{}, kittest.Call(kittest.Fn("u1", "openrouter_update_key", map[string]any{"hash": keyHash, "limitUsd": 40, "disabled": true})), kittest.Text("done"))
 	cs := kittest.Confirmations(h.Say("raise it"))
-	if got := kittest.Summary(t, cs[0]); got != `Change the OpenRouter API key "Example" (sk-or-v1-001...0001): limit $20.00 to $40.00, disable it` || f.writeCount() != 0 {
+	if got := kittest.Summary(t, cs[0]); got != `Change the OpenRouter API key "Example" (sk-or-v1-001...0001): limit $20.00 to $40.00, disable it` || len(f.Writes()) != 0 {
 		t.Fatalf("%q", got)
 	}
 	evs := h.Approve(cs[0])
-	want := []map[string]any{{"op": "updateKey", "args": map[string]any{"hash": keyHash, "limit": float64(40), "disabled": true}}}
-	if !reflect.DeepEqual(f.writes, want) {
-		t.Fatalf("%v", f.writes)
+	want := []fakes.Write{{Op: "updateKey", Args: map[string]any{"hash": keyHash, "limit": float64(40), "disabled": true}}}
+	if !reflect.DeepEqual(f.Writes(), want) {
+		t.Fatalf("%v", f.Writes())
 	}
 	r := kittest.Responses(evs)["openrouter_update_key"]
 	last := r[len(r)-1]
@@ -131,7 +146,7 @@ func TestRefusesAnUpdateWithNoChange(t *testing.T) {
 	f := newFake(t)
 	h := setup(t, f, &sink{}, kittest.Call(kittest.Fn("u2", "openrouter_update_key", map[string]any{"hash": keyHash})), kittest.Text("sorry"))
 	evs := h.Say("x")
-	if len(kittest.Confirmations(evs)) != 0 || f.writeCount() != 0 || !strings.Contains(kittest.AllText(evs), "give at least one change") {
+	if len(kittest.Confirmations(evs)) != 0 || len(f.Writes()) != 0 || !strings.Contains(kittest.AllText(evs), "give at least one change") {
 		t.Fatal(kittest.AllText(evs))
 	}
 }
@@ -140,7 +155,7 @@ func TestRefusesANewKeyWithNoPlaceForItBeforeAnyApproval(t *testing.T) {
 	f := newFake(t)
 	h := setup(t, f, secrets.None, createExample, kittest.Text("sorry"))
 	evs := h.Say("key")
-	if len(kittest.Confirmations(evs)) != 0 || f.writeCount() != 0 || !strings.Contains(kittest.AllText(evs), "Call again with storeAt") {
+	if len(kittest.Confirmations(evs)) != 0 || len(f.Writes()) != 0 || !strings.Contains(kittest.AllText(evs), "Call again with storeAt") {
 		t.Fatal(kittest.AllText(evs))
 	}
 }

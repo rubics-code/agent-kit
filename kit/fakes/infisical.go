@@ -1,7 +1,4 @@
-// Package fakeinfisical is the part of the Infisical API that the Kit's
-// client uses, in memory, for tests. It never shows a value when a request
-// asks for names only.
-package fakeinfisical
+package fakes
 
 import (
 	"encoding/json"
@@ -15,28 +12,29 @@ import (
 	"github.com/rubics-code/agent-kit/kit/infisical"
 )
 
-// Token is the static token that the fake accepts.
-const Token = "test-infisical-token"
+// InfisicalToken is the static token that the Infisical fake accepts.
+const InfisicalToken = "test-infisical-token"
 
-// Write is one write that the fake got.
-type Write struct {
+// InfisicalWrite is one write that the Infisical fake got.
+type InfisicalWrite struct {
 	Method, Path, Env string
 }
 
-// Server is a fake Infisical project.
-type Server struct {
+// Infisical is a fake Infisical project. It never shows a value when a
+// request asks for names only.
+type Infisical struct {
 	*httptest.Server
 	mu      sync.Mutex
 	folders map[string]map[string]string // path to secrets
-	writes  []Write
+	writes  []InfisicalWrite
 	paths   []string // every path that a request named
 	// FailPut, when it is not empty, is the error message of each secret write.
 	FailPut string
 }
 
-// New starts a fake with these folders. The root folder always exists.
-func New(t *testing.T, seed map[string]map[string]string) *Server {
-	s := &Server{folders: map[string]map[string]string{"/": {}}}
+// NewInfisical starts a fake with these folders. The root folder always exists.
+func NewInfisical(t testing.TB, seed map[string]map[string]string) *Infisical {
+	s := &Infisical{folders: map[string]map[string]string{"/": {}}}
 	for p, secrets := range seed {
 		for at := p; at != "/" && at != ""; at = parent(at) {
 			if s.folders[at] == nil {
@@ -61,12 +59,12 @@ func parent(p string) string {
 }
 
 // Client gives the Kit's Infisical client for this fake.
-func (s *Server) Client(env func(path string) string) *infisical.Client {
-	return infisical.New(infisical.Auth{Token: Token}, infisical.Config{BaseURL: s.URL, ProjectID: "test-project", Env: env, Client: s.Server.Client()})
+func (s *Infisical) Client(env func(path string) string) *infisical.Client {
+	return infisical.New(infisical.Auth{Token: InfisicalToken}, infisical.Config{BaseURL: s.URL, ProjectID: "test-project", Env: env, Client: s.Server.Client()})
 }
 
 // Value gives a secret's value, and whether it exists.
-func (s *Server) Value(path, name string) (string, bool) {
+func (s *Infisical) Value(path, name string) (string, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	v, ok := s.folders[path][name]
@@ -74,29 +72,23 @@ func (s *Server) Value(path, name string) (string, bool) {
 }
 
 // Writes gives the writes so far.
-func (s *Server) Writes() []Write {
+func (s *Infisical) Writes() []InfisicalWrite {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return slices.Clone(s.writes)
 }
 
 // Asked reports whether any request named this path.
-func (s *Server) Asked(path string) bool {
+func (s *Infisical) Asked(path string) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return slices.Contains(s.paths, path)
 }
 
-func send(w http.ResponseWriter, status int, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(v)
-}
-
-func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
+func (s *Infisical) serve(w http.ResponseWriter, r *http.Request) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if r.Header.Get("Authorization") != "Bearer "+Token {
+	if r.Header.Get("Authorization") != "Bearer "+InfisicalToken {
 		send(w, 401, map[string]any{"message": "Token missing"})
 		return
 	}
@@ -122,7 +114,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 		send(w, 200, map[string]any{"folders": out})
 	case r.URL.Path == "/api/v1/folders" && r.Method == http.MethodPost:
 		p := strings.TrimSuffix(body["path"], "/") + "/" + body["name"]
-		s.writes = append(s.writes, Write{Method: "POST", Path: p, Env: body["environment"]})
+		s.writes = append(s.writes, InfisicalWrite{Method: "POST", Path: p, Env: body["environment"]})
 		s.folders[p] = map[string]string{}
 		send(w, 200, map[string]any{"folder": map[string]string{"name": body["name"]}})
 	case r.URL.Path == "/api/v3/secrets/raw" && r.Method == http.MethodGet:
@@ -145,7 +137,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 			send(w, 403, map[string]any{"message": s.FailPut})
 			return
 		}
-		s.writes = append(s.writes, Write{Method: r.Method, Path: p + "/" + name, Env: body["environment"]})
+		s.writes = append(s.writes, InfisicalWrite{Method: r.Method, Path: p + "/" + name, Env: body["environment"]})
 		if s.folders[p] == nil {
 			send(w, 404, map[string]any{"message": "Folder not found"})
 			return

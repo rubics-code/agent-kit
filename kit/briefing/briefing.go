@@ -48,8 +48,9 @@ func LoadHome(dir string) (Home, error) {
 	return h, err
 }
 
-// ReadMemory reads the .md files in a folder, in name order. A folder that is
-// not there gives no files.
+// ReadMemory reads the .md files in a folder, in name order. README.md tells
+// people about the folder, so it is not memory. A folder that is not there
+// gives no files.
 func ReadMemory(dir string) ([]File, error) {
 	entries, err := os.ReadDir(dir)
 	if errors.Is(err, fs.ErrNotExist) {
@@ -60,7 +61,7 @@ func ReadMemory(dir string) ([]File, error) {
 	}
 	var out []File
 	for _, e := range entries {
-		if e.IsDir() || !strings.HasSuffix(e.Name(), ".md") {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".md") || strings.EqualFold(e.Name(), "README.md") {
 			continue
 		}
 		b, err := os.ReadFile(filepath.Join(dir, e.Name()))

@@ -211,3 +211,22 @@ func TestRecordsNothingForAnotherPathOrAnError(t *testing.T) {
 		t.Fatalf("%v", m)
 	}
 }
+
+func TestGivesTheUsageOfEachCallToObserveWithNoMeter(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{"model":"example/model",`+usageJSON+`}`)
+	}))
+	defer srv.Close()
+	var got []Usage
+	c := &http.Client{Transport: &Transport{Base: http.DefaultTransport, Observe: func(_ context.Context, u Usage) { got = append(got, u) }}}
+	res, err := c.Post(srv.URL+"/v1/chat/completions", "application/json", strings.NewReader("{}"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, _ = io.ReadAll(res.Body)
+	res.Body.Close()
+	if len(got) != 1 || got[0].Prompt != 4958 || got[0].Cached != 4864 || got[0].Completion != 44 || got[0].CostUSD != 0.0000172 {
+		t.Fatalf("%+v", got)
+	}
+}

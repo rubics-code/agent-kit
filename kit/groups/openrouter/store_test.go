@@ -7,9 +7,9 @@ import (
 
 	"google.golang.org/genai"
 
+	"github.com/rubics-code/agent-kit/kit/fakes"
 	"github.com/rubics-code/agent-kit/kit/group"
 	"github.com/rubics-code/agent-kit/kit/groups/infisical"
-	"github.com/rubics-code/agent-kit/kit/internal/fakeinfisical"
 	"github.com/rubics-code/agent-kit/kit/internal/kittest"
 	"github.com/rubics-code/agent-kit/kit/policy"
 )
@@ -27,10 +27,10 @@ func storePolicy(t *testing.T) policy.Policy {
 	return p
 }
 
-func withStore(t *testing.T, or *fakeOpenRouter, inf *fakeinfisical.Server, s *sink, script ...*genai.Content) *kittest.Harness {
+func withStore(t *testing.T, or *fakes.OpenRouter, inf *fakes.Infisical, s *sink, script ...*genai.Content) *kittest.Harness {
 	t.Helper()
 	pol := storePolicy(t)
-	services := group.Services{"openrouter": or.client()}
+	services := group.Services{"openrouter": client(or)}
 	if inf != nil {
 		services[group.StoreGroupID] = inf.Client(pol.Infisical.EnvLabel)
 	}
@@ -47,8 +47,8 @@ func createAt(name, path string) *genai.Content {
 		"storeAt": map[string]any{"path": path, "name": "OPENROUTER_API_KEY"}}))
 }
 
-func seededStore(t *testing.T) *fakeinfisical.Server {
-	return fakeinfisical.New(t, map[string]map[string]string{"/agents/example": {"OPENROUTER_API_KEY": "sk-example-secret"}})
+func seededStore(t *testing.T) *fakes.Infisical {
+	return fakes.NewInfisical(t, map[string]map[string]string{"/agents/example": {"OPENROUTER_API_KEY": "sk-example-secret"}})
 }
 
 func TestStoresANewOpenRouterKeyInInfisicalAndSaysWhenItReplacesAValue(t *testing.T) {
@@ -61,12 +61,10 @@ func TestStoresANewOpenRouterKeyInInfisicalAndSaysWhenItReplacesAValue(t *testin
 	}
 	all := kittest.AllText(h.Approve(cs[0]))
 	stored, _ := inf.Value("/agents/example", "OPENROUTER_API_KEY")
-	or.mu.Lock()
-	values := make([]string, 0, len(or.values))
-	for _, v := range or.values {
+	values := []string{}
+	for _, v := range or.Values() {
 		values = append(values, v)
 	}
-	or.mu.Unlock()
 	if stored == "sk-example-secret" || !slices.Contains(values, stored) || len(s.delivered) != 0 {
 		t.Fatalf("stored %q, delivered %d", stored, len(s.delivered))
 	}
@@ -90,7 +88,7 @@ func TestRefusesStoreAtWhenInfisicalIsNotSetUpBeforeAnyApproval(t *testing.T) {
 	or := newFake(t)
 	h := withStore(t, or, nil, &sink{}, createAt("Example", "/agents/example"), kittest.Text("ok"))
 	evs := h.Say("x")
-	if len(kittest.Confirmations(evs)) != 0 || or.writeCount() != 0 || !strings.Contains(kittest.AllText(evs), "Infisical is not set up") {
+	if len(kittest.Confirmations(evs)) != 0 || len(or.Writes()) != 0 || !strings.Contains(kittest.AllText(evs), "Infisical is not set up") {
 		t.Fatal(kittest.AllText(evs))
 	}
 }
@@ -99,7 +97,7 @@ func TestRefusesStoreAtOutsideTheWritablePathsBeforeAnyApproval(t *testing.T) {
 	or := newFake(t)
 	h := withStore(t, or, seededStore(t), &sink{}, createAt("Example", "/ops"), kittest.Text("ok"))
 	evs := h.Say("x")
-	if len(kittest.Confirmations(evs)) != 0 || or.writeCount() != 0 || !strings.Contains(kittest.AllText(evs), "is not a writable folder") {
+	if len(kittest.Confirmations(evs)) != 0 || len(or.Writes()) != 0 || !strings.Contains(kittest.AllText(evs), "is not a writable folder") {
 		t.Fatal(kittest.AllText(evs))
 	}
 }

@@ -147,6 +147,12 @@ Each group is in `kit/groups`. Add a group to `Config.Groups`. A group is on whe
 
 A tool that makes a password or a key gives it to the secret sink, or to the secret store with `storeAt`. The model never sees the value.
 
+### Evals and the console in another module
+
+- `kit/fakes` has a fake of each service (Cloudflare, OpenRouter keys, MXroute, Infisical) as an `httptest` server. An agent's evals run the real model against these fakes, so an eval never changes a real account.
+- `run.Config.HTTPClient`, `Store` and `Secrets` replace the outside client, the secret store and the secret sink, for an eval. `tokens.Transport.Observe` gets the provider's usage of each model call.
+- An agent in another module gets the Kit with no console build. Build the console from the same commit (`npm ci && npm run build` in `web/`), and give the folder in `run.Config.ConsoleDir` or `<PREFIX>_CONSOLE_DIR`.
+
 ### Auth
 
 On a loopback address, the agent has no auth. It refuses a browser request from another origin (unless the origin is in `Config.Origins`), a request for another host name (DNS rebinding), and a form post.

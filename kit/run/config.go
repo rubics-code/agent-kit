@@ -81,6 +81,18 @@ type Config struct {
 	// Origins are the browser origins that may call the agent from another origin.
 	Origins []string
 
+	// ConsoleDir serves the console from a folder of built files, in place of
+	// the console in the binary. <PREFIX>_CONSOLE_DIR replaces it. An agent
+	// in another module uses it, because its copy of the Kit has no build.
+	ConsoleDir string
+
+	// HTTPClient replaces the Kit's client for outside calls. Store and
+	// Secrets replace the secret store and the secret sink. They are for
+	// evals, which run the agent against fake services.
+	HTTPClient *http.Client
+	Store      secrets.Store
+	Secrets    secrets.Sink
+
 	// Now replaces the clock, for tests.
 	Now func() time.Time
 

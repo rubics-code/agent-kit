@@ -8,6 +8,8 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/a2aproject/a2a-go/v2/a2a"
@@ -145,13 +147,20 @@ func Build(ctx context.Context, cfg Config, e credentials.Environ, stderr io.Wri
 	}
 	headless := cfg.env(e, "HEADLESS") == "1"
 
-	client, err := credentials.HTTPClient(e)
-	if err != nil {
-		return nil, err
+	client := cfg.HTTPClient
+	if client == nil {
+		c, err := credentials.HTTPClient(e)
+		if err != nil {
+			return nil, err
+		}
+		client = c
 	}
 	creds, vaultHosts, store, err := keys(ctx, &cfg, e, client)
 	if err != nil {
 		return nil, err
+	}
+	if cfg.Store != nil {
+		store = cfg.Store
 	}
 	if creds.Mode == credentials.AgentVault && cfg.Infisical != nil && vaultHosts == nil {
 		fmt.Fprintln(stderr, "Agent Vault: Infisical did not list the session's services, so every tool group is on.")
@@ -170,7 +179,10 @@ func Build(ctx context.Context, cfg Config, e credentials.Environ, stderr io.Wri
 	}
 
 	var sink secrets.Sink = secrets.Terminal(stderr)
-	if headless {
+	switch {
+	case cfg.Secrets != nil:
+		sink = cfg.Secrets
+	case headless:
 		inbox := cfg.SecretInbox
 		if inbox == "" && cfg.Infisical != nil {
 			inbox = cfg.Infisical.Path + "/inbox"
@@ -345,7 +357,18 @@ func (a *Agent) build(ctx context.Context, creds credentials.Credentials, vaultH
 			return err
 		}
 	}
-	mux.Handle("/", web.Handler(web.Dist()))
+	console := web.Dist()
+	dir := cfg.ConsoleDir
+	if v := cfg.env(a.env(), "CONSOLE_DIR"); v != "" {
+		dir = v
+	}
+	if dir != "" {
+		if _, err := os.Stat(filepath.Join(dir, "index.html")); err != nil {
+			return fmt.Errorf("the console folder %s has no index.html: %w", dir, err)
+		}
+		console = os.DirFS(dir)
+	}
+	mux.Handle("/", web.Handler(console))
 	h, err := protect(mux, cfg, a.env())
 	if err != nil {
 		return err

@@ -127,6 +127,9 @@ func (m *Meter) Record(ctx context.Context, u Usage) {
 type Transport struct {
 	Base  http.RoundTripper
 	Meter *Meter
+	// Observe, when it is not nil, gets the usage of each call too, for
+	// example to compare the tokens of two agents in an eval.
+	Observe func(ctx context.Context, u Usage)
 }
 
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -135,7 +138,14 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return res, err
 	}
 	sse := strings.HasPrefix(res.Header.Get("Content-Type"), "text/event-stream")
-	res.Body = &usageBody{ReadCloser: res.Body, sse: sse, done: func(u Usage) { t.Meter.Record(req.Context(), u) }}
+	res.Body = &usageBody{ReadCloser: res.Body, sse: sse, done: func(u Usage) {
+		if t.Meter != nil {
+			t.Meter.Record(req.Context(), u)
+		}
+		if t.Observe != nil {
+			t.Observe(req.Context(), u)
+		}
+	}}
 	return res, nil
 }
 

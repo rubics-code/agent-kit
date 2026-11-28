@@ -67,3 +67,13 @@ func TestAHomeNeedsASystemPromptAndAPolicy(t *testing.T) {
 		t.Fatal("a home with no policy passed")
 	}
 }
+
+func TestAREADMEInTheMemoryFolderIsNotMemory(t *testing.T) {
+	dir := t.TempDir()
+	_ = os.WriteFile(filepath.Join(dir, "README.md"), []byte("Memory lands here."), 0o600)
+	_ = os.WriteFile(filepath.Join(dir, "notes.md"), []byte("A fact."), 0o600)
+	files, err := ReadMemory(dir)
+	if err != nil || len(files) != 1 || files[0].Name != "notes.md" {
+		t.Fatalf("%+v %v", files, err)
+	}
+}
