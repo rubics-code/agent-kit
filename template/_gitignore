@@ -1,0 +1,4 @@
+node_modules/
+.env
+home/memory/*
+!home/memory/README.md

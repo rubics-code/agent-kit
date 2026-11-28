@@ -12,6 +12,14 @@ Node 24 or later.
 npm install @rubics-code/agent-kit
 ```
 
+## Make a new agent
+
+```bash
+npx @rubics-code/agent-kit init scout
+```
+
+This makes `agents/scout/` with the agent as data (`src/agent.ts`), an example tool group with a write tool behind the approval gate, a system prompt, tests, evals, a Dockerfile, and an entrypoint for Agent Vault. `--dir` sets another folder, and `--operator` names who approves the actions (default: your git `user.name`). The agent is its own npm package with its own `package-lock.json`, which the Dockerfile needs.
+
 ## An agent
 
 ```ts
@@ -66,7 +74,7 @@ Set `INFISICAL_DOMAIN`, `INFISICAL_AGENT_VAULT_PROXY_ADDRESS`, `INFISICAL_AGENT_
 | `npm test` | The tests. `test/fixture.ts` is a test agent. |
 | `npm run type-check` | Type-checks `src/` and `test/`. |
 | `npm run build` | Compiles `src/` to `dist/` and copies the `.md` and `.html` files that the code reads. |
-| `npm run pack-check` | Packs the package, installs the tarball in an empty folder, runs a consumer, and type-checks a consumer file. |
+| `npm run pack-check` | Packs the package, installs the tarball in an empty folder, runs a consumer, type-checks a consumer file, and makes an agent with `init` that must pass its own type-check and tests. |
 
 ## Release
 

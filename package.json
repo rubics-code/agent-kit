@@ -29,8 +29,12 @@
       "default": "./dist/index.js"
     }
   },
+  "bin": {
+    "agent-kit": "./dist/cli/bin.js"
+  },
   "files": [
     "dist",
+    "template",
     "README.md",
     "LICENSE"
   ],
@@ -47,9 +51,9 @@
   "dependencies": {
     "@langchain/core": "^1.5.1",
     "@langchain/langgraph": "^1.7.5",
+    "@langchain/openai": "^1.8.5",
     "langchain": "^1.6.8",
-    "zod": "^4.6.7",
-    "@langchain/openai": "^1.8.5"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",

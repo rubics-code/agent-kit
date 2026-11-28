@@ -1,0 +1,7 @@
+# Allowlist: only these paths go into the build context. .env never does.
+*
+!package.json
+!package-lock.json
+!src
+!home/prompts
+!entrypoint.sh
