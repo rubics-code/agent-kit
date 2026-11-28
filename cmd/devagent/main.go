@@ -39,9 +39,9 @@ A person must approve each write_note call. When a write waits for approval, say
 Answer in short, plain sentences.`
 
 type config struct {
-	addr, db, model, baseURL string
-	fake                     bool
-	origins                  []string
+	addr, db, model, baseURL, name string
+	fake                           bool
+	origins                        []string
 }
 
 func main() {
@@ -51,6 +51,7 @@ func main() {
 	flag.StringVar(&c.db, "db", "devagent.db", "SQLite file for the sessions, tasks and tools")
 	flag.StringVar(&c.model, "model", "deepseek/deepseek-v4-flash-0731", "OpenRouter model id")
 	flag.StringVar(&c.baseURL, "base-url", "https://openrouter.ai/api/v1", "OpenAI-compatible base URL")
+	flag.StringVar(&c.name, "name", "devagent", "the agent's name")
 	flag.BoolVar(&c.fake, "fake", false, "use the fake model (no key, no provider calls)")
 	flag.StringVar(&origins, "origins", "http://localhost:5173,http://127.0.0.1:5173", "browser origins that may call this agent, comma separated")
 	flag.Parse()
@@ -109,7 +110,7 @@ func build(ctx context.Context, c config) (http.Handler, error) {
 	}
 
 	a, err := llmagent.New(llmagent.Config{
-		Name:        "devagent",
+		Name:        c.name,
 		Description: "The Kit's agent for development. It keeps a notebook.",
 		Model:       m,
 		Instruction: instruction,
@@ -158,7 +159,7 @@ func routes(a agent.Agent, sessions session.Service, tasks *taskstore.Store, c c
 		A2APartConverter:     a2ui.ToGenAI,
 		AfterExecuteCallback: a2ui.ApprovalCards(a2ui.DefaultChoices...),
 	})
-	mux.Handle(a2asrv.WellKnownAgentCardPath, a2asrv.NewStaticAgentCardHandler(card))
-	mux.Handle("/a2a", a2asrv.NewJSONRPCHandler(a2asrv.NewHandler(exec, a2asrv.WithTaskStore(tasks))))
+	mux.Handle(a2asrv.WellKnownAgentCardPath, cors(c.origins, a2asrv.NewStaticAgentCardHandler(card)))
+	mux.Handle("/a2a", cors(c.origins, a2asrv.NewJSONRPCHandler(a2asrv.NewHandler(exec, a2asrv.WithTaskStore(tasks)))))
 	return mux, nil
 }

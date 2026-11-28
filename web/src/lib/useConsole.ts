@@ -135,6 +135,18 @@ export function useConsole() {
     location.hash = "#/";
   }, []);
 
+  const connect = useCallback((a: Agent) => {
+    setAgents((list) => upsertAgent(list, a));
+    setSelected(a.id);
+    setDraftId(newId());
+    location.hash = "#/";
+  }, []);
+
+  const removeAgent = useCallback((id: string) => {
+    setAgents((list) => list.filter((a) => a.id !== id));
+    setSelected((s) => (s === id ? undefined : s));
+  }, []);
+
   const busyThread = Object.entries(busy).find(([, v]) => v)?.[0];
-  return { agents, setAgents, threads, agent, thread, threadId, route, busy: !!busy[threadId], busyThread, send, action, decideDirect, newThread: newThreadNow, selectAgent, setSelected };
+  return { agents, setAgents, threads, agent, thread, threadId, route, busy: !!busy[threadId], busyThread, send, action, decideDirect, newThread: newThreadNow, selectAgent, setSelected, connect, removeAgent };
 }
