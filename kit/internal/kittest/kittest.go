@@ -3,6 +3,7 @@ package kittest
 
 import (
 	"context"
+	"encoding/json"
 	"iter"
 	"sync"
 	"testing"
@@ -173,4 +174,49 @@ func Texts(evs []*session.Event) []string {
 		}
 	}
 	return out
+}
+
+// Fn is a tool call from the model.
+func Fn(id, name string, args map[string]any) *genai.FunctionCall {
+	return &genai.FunctionCall{ID: id, Name: name, Args: args}
+}
+
+// Payload gives the approval payload of a confirmation call, with its hint.
+func Payload(t *testing.T, fc *genai.FunctionCall) map[string]any {
+	t.Helper()
+	b, _ := json.Marshal(fc.Args["toolConfirmation"])
+	var tc struct {
+		Hint    string         `json:"hint"`
+		Payload map[string]any `json:"payload"`
+	}
+	if err := json.Unmarshal(b, &tc); err != nil || tc.Payload == nil {
+		t.Fatalf("no approval payload in %v: %v", fc.Args, err)
+	}
+	tc.Payload["hint"] = tc.Hint
+	return tc.Payload
+}
+
+// Summary gives the approval summary of a confirmation call.
+func Summary(t *testing.T, fc *genai.FunctionCall) string {
+	t.Helper()
+	s, _ := Payload(t, fc)["summary"].(string)
+	return s
+}
+
+// Approve approves a confirmation call with its own arguments hash.
+func (h *Harness) Approve(fc *genai.FunctionCall) []*session.Event {
+	h.T.Helper()
+	return h.Send(Answer(true, map[string]map[string]any{fc.ID: {"argsHash": Payload(h.T, fc)["argsHash"]}}))
+}
+
+// Reject rejects a confirmation call.
+func (h *Harness) Reject(fc *genai.FunctionCall, reason string) []*session.Event {
+	h.T.Helper()
+	return h.Send(Answer(false, map[string]map[string]any{fc.ID: {"argsHash": Payload(h.T, fc)["argsHash"], "reason": reason}}))
+}
+
+// AllText gives the events as JSON, to look for a value anywhere in them.
+func AllText(evs []*session.Event) string {
+	b, _ := json.Marshal(evs)
+	return string(b)
 }

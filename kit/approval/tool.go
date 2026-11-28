@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/google/jsonschema-go/jsonschema"
 	"google.golang.org/genai"
 
 	"google.golang.org/adk/v2/agent"
@@ -33,6 +34,9 @@ type Prep[D any] struct {
 type Spec[A, D any] struct {
 	Name        string
 	Description string
+	// InputSchema, when it is not nil, replaces the schema that ADK infers
+	// from A. ADK checks each call against it before Prepare.
+	InputSchema *jsonschema.Schema
 	// Policy gives the rejection copy.
 	Policy policy.Policy
 	// Prepare does the reads that the summary needs. It runs again when the
@@ -84,7 +88,7 @@ func Tool[A, D any](s Spec[A, D]) (tool.Tool, error) {
 	if s.Prepare == nil || s.Run == nil {
 		return nil, fmt.Errorf("the write tool %s needs Prepare and Run", s.Name)
 	}
-	inner, err := functiontool.New(functiontool.Config{Name: s.Name, Description: s.Description},
+	inner, err := functiontool.New(functiontool.Config{Name: s.Name, Description: s.Description, InputSchema: s.InputSchema},
 		func(ctx agent.Context, a A) (map[string]any, error) {
 			pre, err := s.Prepare(ctx, a)
 			if err != nil {

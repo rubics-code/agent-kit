@@ -201,7 +201,7 @@ func (a *Agent) build(ctx context.Context, creds credentials.Credentials, vaultH
 	cfg := a.cfg
 	a.Kit = Kit{DB: a.db, Policy: pol, Secrets: sink, Store: store, HTTPClient: client, Mode: creds.Mode, Headless: a.Headless}
 
-	services := group.Connect(cfg.Groups, group.ConnectContext{Holds: creds.Holds, Get: creds.Optional, Store: store})
+	services := group.Connect(cfg.Groups, group.ConnectContext{Holds: creds.Holds, Get: creds.Optional, Store: store, HTTPClient: client})
 	hosts := map[string]string{}
 	if cfg.Infisical != nil {
 		if u, err := url.Parse(cfg.Infisical.URL); err == nil {
