@@ -48,7 +48,8 @@ jobs:
         working-directory: spike/adk/web
 
   # The Go Kit (root Go module) and the web client in web/. The browser tests
-  # use the dev agent with the fake model, so they need no key.
+  # use the dev agent with the fake model, so they need no key. The last step
+  # runs them against one binary with the console embedded.
   console:
     runs-on: ubuntu-latest
     steps:
@@ -56,7 +57,7 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
-      - run: test -z "$(gofmt -l cmd kit)"
+      - run: test -z "$(gofmt -l cmd kit web/embed.go web/embed_test.go)"
       - run: go vet ./...
       - run: go test ./...
       - uses: actions/setup-node@v7
@@ -73,6 +74,8 @@ jobs:
       - run: npx playwright install --with-deps chromium
         working-directory: web
       - run: npx playwright test
+        working-directory: web
+      - run: npm run e2e:embed
         working-directory: web
       - uses: actions/upload-artifact@v7
         if: failure()

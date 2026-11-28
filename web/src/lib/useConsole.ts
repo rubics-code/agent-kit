@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ActionPayload } from "@a2ui/web_core";
 import { A2AClient, A2UI_MIME, endpointFor, fetchCard, newId, rendersA2UI, userMessage, type Part } from "./a2a";
-import { catalogIds } from "./catalogs";
+import { catalogIds } from "./catalogIds";
 import { agentId, loadAgents, loadThreads, saveAgents, saveThreads, upsertAgent, type Agent } from "./storage";
 import { addCard, cardIdFor, fetchCards, removeCard, sortCards, type DashCard } from "./dashboard";
 import { addError, addUser, applyEvent, decide, markOnDashboard, newThread, type Thread } from "./thread";

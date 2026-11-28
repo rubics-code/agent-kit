@@ -1,5 +1,5 @@
 // Command devagent is the Kit's agent for development. It serves A2A, the ADK
-// REST API and the Kit endpoints. With -fake it needs no key.
+// REST API, the Kit endpoints and the console. With -fake it needs no key.
 package main
 
 import (
@@ -32,6 +32,7 @@ import (
 	"github.com/rubics-code/agent-kit/kit/fakemodel"
 	"github.com/rubics-code/agent-kit/kit/taskstore"
 	"github.com/rubics-code/agent-kit/kit/transcribe"
+	"github.com/rubics-code/agent-kit/web"
 )
 
 const instruction = `You are the dev agent of the Rubics Code agent kit. You keep a small notebook.
@@ -142,7 +143,11 @@ func build(ctx context.Context, c config) (http.Handler, error) {
 	}
 	mux := http.NewServeMux()
 	mux.Handle("/kit/transcribe", cors(c.origins, transcribe.Handler(stt)))
-	mux.Handle("/", h)
+	mux.Handle("/a2a", h)
+	mux.Handle("/api/", h)
+	mux.Handle("/kit/", h)
+	mux.Handle("/.well-known/", h)
+	mux.Handle("/", web.Handler(web.Dist()))
 	return mux, nil
 }
 

@@ -6,7 +6,9 @@ import { Catalog } from "@a2ui/web_core";
 import { CommonSchemas } from "@a2ui/web_core/v1_0";
 import { IconShield } from "../components/icons";
 
-export const KIT_CATALOG = "https://github.com/rubics-code/agent-kit/catalogs/kit/v1";
+import { KIT_CATALOG } from "../lib/catalogIds";
+
+export { KIT_CATALOG };
 
 const Entry = z.object({ label: z.string(), value: z.string(), mono: z.boolean().optional() });
 const Tone = z.enum(["ok", "warn", "idle", "bad"]);
