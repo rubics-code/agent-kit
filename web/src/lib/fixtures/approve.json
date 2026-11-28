@@ -1,0 +1,258 @@
+[
+ {
+  "statusUpdate": {
+   "contextId": "c2",
+   "status": {
+    "state": "TASK_STATE_WORKING",
+    "timestamp": "2026-11-28T04:44:25.775Z"
+   },
+   "taskId": "01a22077-f8ff-742e-82ab-c89000043426",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_session_id": "c2",
+    "adk_user_id": "A2A_USER_c2",
+    "https://google.github.io/adk-docs/a2a/a2a-extension/": true
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22078-0332-7766-a34b-29f78d1b1a8a",
+    "parts": [
+     {
+      "data": {
+       "id": "fake-write_note",
+       "name": "write_note",
+       "response": {
+        "status": "written",
+        "title": "Groceries"
+       }
+      },
+      "metadata": {
+       "adk_type": "function_response"
+      }
+     }
+    ]
+   },
+   "contextId": "c2",
+   "taskId": "01a22077-f8ff-742e-82ab-c89000043426",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-bb818735-c9fd-4f8e-a167-9ac24f983a93",
+    "adk_partial": false,
+    "adk_session_id": "c2",
+    "adk_user_id": "A2A_USER_c2"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22078-0332-796e-b141-1c5bcdb22482",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "text": "The ",
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c2",
+   "taskId": "01a22077-f8ff-742e-82ab-c89000043426",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-bb818735-c9fd-4f8e-a167-9ac24f983a93",
+    "adk_partial": true,
+    "adk_session_id": "c2",
+    "adk_user_id": "A2A_USER_c2"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22078-0332-796e-b141-1c5bcdb22482",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "text": "note ",
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c2",
+   "taskId": "01a22077-f8ff-742e-82ab-c89000043426",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-bb818735-c9fd-4f8e-a167-9ac24f983a93",
+    "adk_partial": true,
+    "adk_session_id": "c2",
+    "adk_user_id": "A2A_USER_c2"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22078-0332-796e-b141-1c5bcdb22482",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "text": "\"Groceries\" ",
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c2",
+   "taskId": "01a22077-f8ff-742e-82ab-c89000043426",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-bb818735-c9fd-4f8e-a167-9ac24f983a93",
+    "adk_partial": true,
+    "adk_session_id": "c2",
+    "adk_user_id": "A2A_USER_c2"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22078-0332-796e-b141-1c5bcdb22482",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "text": "is ",
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c2",
+   "taskId": "01a22077-f8ff-742e-82ab-c89000043426",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-bb818735-c9fd-4f8e-a167-9ac24f983a93",
+    "adk_partial": true,
+    "adk_session_id": "c2",
+    "adk_user_id": "A2A_USER_c2"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22078-0332-796e-b141-1c5bcdb22482",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "text": "written.",
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c2",
+   "taskId": "01a22077-f8ff-742e-82ab-c89000043426",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-bb818735-c9fd-4f8e-a167-9ac24f983a93",
+    "adk_partial": true,
+    "adk_session_id": "c2",
+    "adk_user_id": "A2A_USER_c2"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "append": true,
+   "artifact": {
+    "artifactId": "01a22078-0332-7766-a34b-29f78d1b1a8a",
+    "parts": [
+     {
+      "text": "The note \"Groceries\" is written."
+     }
+    ]
+   },
+   "contextId": "c2",
+   "taskId": "01a22077-f8ff-742e-82ab-c89000043426",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_author": "devagent",
+    "adk_invocation_id": "e-bb818735-c9fd-4f8e-a167-9ac24f983a93",
+    "adk_partial": false,
+    "adk_session_id": "c2",
+    "adk_usage_metadata": {
+     "candidatesTokenCount": 10,
+     "promptTokenCount": 100,
+     "totalTokenCount": 110
+    },
+    "adk_user_id": "A2A_USER_c2"
+   }
+  }
+ },
+ {
+  "artifactUpdate": {
+   "artifact": {
+    "artifactId": "01a22078-0332-796e-b141-1c5bcdb22482",
+    "metadata": {
+     "adk_partial": true
+    },
+    "parts": [
+     {
+      "data": {},
+      "metadata": {
+       "adk_partial": true
+      }
+     }
+    ]
+   },
+   "contextId": "c2",
+   "lastChunk": true,
+   "taskId": "01a22077-f8ff-742e-82ab-c89000043426",
+   "metadata": {
+    "adk_partial": true
+   }
+  }
+ },
+ {
+  "statusUpdate": {
+   "contextId": "c2",
+   "status": {
+    "state": "TASK_STATE_COMPLETED",
+    "timestamp": "2026-11-28T04:44:25.782Z"
+   },
+   "taskId": "01a22077-f8ff-742e-82ab-c89000043426",
+   "metadata": {
+    "adk_app_name": "devagent",
+    "adk_session_id": "c2",
+    "adk_user_id": "A2A_USER_c2",
+    "https://google.github.io/adk-docs/a2a/a2a-extension/": true
+   }
+  }
+ }
+]
